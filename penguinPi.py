@@ -118,127 +118,127 @@ SET_RESET = 0xDD
 GET_RESET = 0x11
 
 class UART(object):
-	"""Setup UART comunication between the raspberry pi and the microcontroler
-	"""
-	def __init__(self, port='/dev/attyAMA0', baud=115200):
-		self.ser = serial.Serial(	port = port,
-									baudrate = baud,
-									parity = serial.PARITY_NONE,
-									stopbits = serial.STOPBITS_ONE,
-									bytesize = serial.EIGHTBITS,
-									timeout = 1
-		)
-		self.queue = queue.Queue()
-		self.receive_thread = threading.Thread(target=self.uart_recv, daemon=True)
-		self.close_event = threading.Event()
+    """Setup UART comunication between the raspberry pi and the microcontroler
+    """
+    def __init__(self, port='/dev/attyAMA0', baud=115200):
+        self.ser = serial.Serial(    port = port,
+                                    baudrate = baud,
+                                    parity = serial.PARITY_NONE,
+                                    stopbits = serial.STOPBITS_ONE,
+                                    bytesize = serial.EIGHTBITS,
+                                    timeout = 1
+        )
+        self.queue = queue.Queue()
+        self.receive_thread = threading.Thread(target=self.uart_recv, daemon=True)
+        self.close_event = threading.Event()
 
-	def start(self):
-		"""Start UART comunication between the raspberry pi and the
-		microcontroler
-		"""
-		#opens serial interface and starts recieve handler
-		if self.ser.isOpen() is False:
-			self.ser.open()
+    def start(self):
+        """Start UART comunication between the raspberry pi and the
+        microcontroler
+        """
+        #opens serial interface and starts recieve handler
+        if self.ser.isOpen() is False:
+            self.ser.open()
 
-		#reset the buffers
-		self.ser.reset_input_buffer()
-		self.ser.reset_output_buffer()
+        #reset the buffers
+        self.ser.reset_input_buffer()
+        self.ser.reset_output_buffer()
 
-		#display that connection is started
-		print("Transmitting on " + self.ser.name)
-		print("Serial settings: " + str(self.ser.baudrate) + " " + str(self.ser.bytesize) + " " + self.ser.parity + " " + str(self.ser.stopbits))
+        #display that connection is started
+        print("Transmitting on " + self.ser.name)
+        print("Serial settings: " + str(self.ser.baudrate) + " " + str(self.ser.bytesize) + " " + self.ser.parity + " " + str(self.ser.stopbits))
 
-		#start the recive thread
-		self.receive_thread.start()
+        #start the recive thread
+        self.receive_thread.start()
 
-	def stop(self):
-		'''Close the comunication between the raspberry pi and the
-		microcontroler
-		'''
-		self.close_event.set()
-		self.receive_thread.join()
-		self.ser.close()
-		self.ser.__del__()
+    def stop(self):
+        '''Close the comunication between the raspberry pi and the
+        microcontroler
+        '''
+        self.close_event.set()
+        self.receive_thread.join()
+        self.ser.close()
+        self.ser.__del__()
 
-	def flush(self):
-		'''flushes input and output buffer, clears queue
-		'''
-		self.ser.reset_input_buffer()
-		self.ser.reset_output_buffer()
+    def flush(self):
+        '''flushes input and output buffer, clears queue
+        '''
+        self.ser.reset_input_buffer()
+        self.ser.reset_output_buffer()
 
 
-	def putcs(self, dgram):
-		'''function: prepends startbyte and puts datagram into write buffer
-		'''
-		dgram = (struct.pack('!B', STARTBYTE)) + dgram
-		self.ser.write(dgram)
+    def putcs(self, dgram):
+        '''function: prepends startbyte and puts datagram into write buffer
+        '''
+        dgram = (struct.pack('!B', STARTBYTE)) + dgram
+        self.ser.write(dgram)
 
-	'''def uart_recv(self):
-		#thread: receives command packets, and prints other messages
-		while not self.close_event.is_set():
+    '''def uart_recv(self):
+        #thread: receives command packets, and prints other messages
+        while not self.close_event.is_set():
 
-			if self.ser.inWaiting() > 0:
-				com = self.ser.read(1)
-				if ord(com) == 0:
-					continue
-				elif ord(com) == STARTBYTE:
-					paylen = self.ser.read()
-					paylenint, = struct.unpack("!B", paylen)
-					dgram = self.ser.read(paylenint-2)
-					crcDgram = self.ser.read()
+            if self.ser.inWaiting() > 0:
+                com = self.ser.read(1)
+                if ord(com) == 0:
+                    continue
+                elif ord(com) == STARTBYTE:
+                    paylen = self.ser.read()
+                    paylenint, = struct.unpack("!B", paylen)
+                    dgram = self.ser.read(paylenint-2)
+                    crcDgram = self.ser.read()
 
-					dgram = paylen + dgram
+                    dgram = paylen + dgram
 
-					crcDgram, = struct.unpack("!B", crcDgram)
-					crcCalc = crc8(dgram, paylenint-1)
+                    crcDgram, = struct.unpack("!B", crcDgram)
+                    crcCalc = crc8(dgram, paylenint-1)
 
-					if crcCalc == crcDgram:
-						self.queue.put(dgram)
-					else:
-						#todo: throw an exception?
-						print("ERROR: CRC Failed (Python)")
-						print("Calculated CRC: " + hex(crcCalc) + " Recieved CRC: " + hex(crcDgram))
+                    if crcCalc == crcDgram:
+                        self.queue.put(dgram)
+                    else:
+                        #todo: throw an exception?
+                        print("ERROR: CRC Failed (Python)")
+                        print("Calculated CRC: " + hex(crcCalc) + " Recieved CRC: " + hex(crcDgram))
 
-				else: #displayable
-					if ord(com) == 10:
-						print(" ")
-					else:
-						print(com.decode("utf-8", "ignore"), end="")
+                else: #displayable
+                    if ord(com) == 10:
+                        print(" ")
+                    else:
+                        print(com.decode("utf-8", "ignore"), end="")
 
-			#time.sleep(0.01)'''
+            #time.sleep(0.01)'''
 
-	def uart_recv(self):
-	        '''thread: receives command packets, and prints other messages
-			'''
-		while not self.close_event.is_set():
-			#read first byte
-			com = self.ser.read(size=1)
-			if len(com) == 0:
-				continue;
-			if ord(com) == 0:
-				continue
-			elif ord(com) == STARTBYTE:
-				#extract the packet from the UART
-				paylen = self.ser.read()
-				paylenint, = struct.unpack("!B", paylen)
-				dgram = self.ser.read(paylenint-2)
-				crcDgram = self.ser.read()
-				dgram = paylen + dgram
-				crcDgram, = struct.unpack("!B", crcDgram)\
-				#run crcCalc to ensure correct data
-				crcCalc = crc8(dgram, paylenint-1)
-				if crcCalc == crcDgram:
-					self.queue.put(dgram)
-				else:
-					#todo: throw an exception?
-					print("ERROR: CRC Failed (Python)")
-					print("Calculated CRC: " + hex(crcCalc) + " Recieved CRC: " + hex(crcDgram))
+    def uart_recv(self):
+            '''thread: receives command packets, and prints other messages
+            '''
+        while not self.close_event.is_set():
+            #read first byte
+            com = self.ser.read(size=1)
+            if len(com) == 0:
+                continue;
+            if ord(com) == 0:
+                continue
+            elif ord(com) == STARTBYTE:
+                #extract the packet from the UART
+                paylen = self.ser.read()
+                paylenint, = struct.unpack("!B", paylen)
+                dgram = self.ser.read(paylenint-2)
+                crcDgram = self.ser.read()
+                dgram = paylen + dgram
+                crcDgram, = struct.unpack("!B", crcDgram)\
+                #run crcCalc to ensure correct data
+                crcCalc = crc8(dgram, paylenint-1)
+                if crcCalc == crcDgram:
+                    self.queue.put(dgram)
+                else:
+                    #todo: throw an exception?
+                    print("ERROR: CRC Failed (Python)")
+                    print("Calculated CRC: " + hex(crcCalc) + " Recieved CRC: " + hex(crcDgram))
 
-			else: #displayable
-				if ord(com) == 10:
-					print(" ")
-				else:
-					print(com.decode("utf-8", "ignore"))
+            else: #displayable
+                if ord(com) == 10:
+                    print(" ")
+                else:
+                    print(com.decode("utf-8", "ignore"))
 
 #create UART object
 uart = UART("/dev/ttyAMA0", 115200)
@@ -246,423 +246,423 @@ uart = UART("/dev/ttyAMA0", 115200)
 
 
 def init():
-	'''Initlise the UART object
-	'''
-	time.sleep(0.5)
-	uart.start()
+    '''Initlise the UART object
+    '''
+    time.sleep(0.5)
+    uart.start()
 
 def close():
-	'''Close the UART object
-	'''
-	stop_all()
-	time.sleep(1)
-	uart.stop()
-	print("UART stopped and closed")
+    '''Close the UART object
+    '''
+    stop_all()
+    time.sleep(1)
+    uart.stop()
+    print("UART stopped and closed")
 
 
 def crc8(word, length):
-	'''cyclic redundancy check
-	'''
-	crc = 0
-	for i in range(0, length):
-		crc = crc ^ word[i]
-		for j in range(0, 8):
-			if crc & 1:
-				crc = (crc >> 1) ^ CRC_8_POLY
-			else:
-				crc =  (crc >> 1)
-	return crc
+    '''cyclic redundancy check
+    '''
+    crc = 0
+    for i in range(0, length):
+        crc = crc ^ word[i]
+        for j in range(0, 8):
+            if crc & 1:
+                crc = (crc >> 1) ^ CRC_8_POLY
+            else:
+                crc =  (crc >> 1)
+    return crc
 
 
 def print_hex(bin):
-	'''print hex value
-	'''
-	print(" ".join(hex(n) for n in bin))
+    '''print hex value
+    '''
+    print(" ".join(hex(n) for n in bin))
 
 
 def form_datagram(address, opCode, payload=0x00, paytype=''):
-	'''Create the datagram to sent to the microcontroler
-	'''
-	if paytype == 'char':
-		#form a bytestring of the payload
-		bin = ((struct.pack("!BBb", address, opCode, payload)))
-	elif paytype == 'int':
-		#h represents a 2 byte signed int
-		bin = ((struct.pack("!BBh", address, opCode, payload)))
-	elif paytype == 'float':
-		bin = ((struct.pack("!BBf", address, opCode, payload)))
-	elif paytype == '':
-		#empty payload: probably a getter
-		bin = ((struct.pack("!BB", address, opCode)))
-	else :
-		print("ERROR: Incompatible Payload Type Defined. (Python)")
-		return 0
-	length = (len(bin) + 2)
-	bin = (struct.pack("!B", length)) + bin
-	crc = crc8(bin, length-1)
-	bin = bin + (struct.pack("!B", crc))
-	return bin
+    '''Create the datagram to sent to the microcontroler
+    '''
+    if paytype == 'char':
+        #form a bytestring of the payload
+        bin = ((struct.pack("!BBb", address, opCode, payload)))
+    elif paytype == 'int':
+        #h represents a 2 byte signed int
+        bin = ((struct.pack("!BBh", address, opCode, payload)))
+    elif paytype == 'float':
+        bin = ((struct.pack("!BBf", address, opCode, payload)))
+    elif paytype == '':
+        #empty payload: probably a getter
+        bin = ((struct.pack("!BB", address, opCode)))
+    else :
+        print("ERROR: Incompatible Payload Type Defined. (Python)")
+        return 0
+    length = (len(bin) + 2)
+    bin = (struct.pack("!B", length)) + bin
+    crc = crc8(bin, length-1)
+    bin = bin + (struct.pack("!B", crc))
+    return bin
 
 
 def extract_payload(bin, address, opcode, paytype):
-	'''Extracts payload from the microcontroler
-	'''
-	if paytype == 'char':
-		upackstr = "!b"
-	elif paytype == 'int':
-		upackstr = "!h" #h represents a 2 byte signed int
-	elif paytype == 'float':
-		upackstr = "!f"
-	else :
-		print("ERROR: Incompatible Payload Type Defined. (Python)")
-		return 0
+    '''Extracts payload from the microcontroler
+    '''
+    if paytype == 'char':
+        upackstr = "!b"
+    elif paytype == 'int':
+        upackstr = "!h" #h represents a 2 byte signed int
+    elif paytype == 'float':
+        upackstr = "!f"
+    else :
+        print("ERROR: Incompatible Payload Type Defined. (Python)")
+        return 0
 
-	if bin[1] == address:
-		if bin[2] == opcode:
-			com, = struct.unpack(upackstr, bin[3:])
-			return com
-	else:
-		print(bin.decode("utf-8", "ignore"))
-		return 0
+    if bin[1] == address:
+        if bin[2] == opcode:
+            com, = struct.unpack(upackstr, bin[3:])
+            return com
+    else:
+        print(bin.decode("utf-8", "ignore"))
+        return 0
 
 
 def get_variable(address, opcode, paytype, timeout=2):
-	'''requests vearables from the microcontroler
-	'''
-	dgram = form_datagram(address, opcode)
-	uart.putcs(dgram)
-	bin = uart.queue.get()
-	#clear the MSB of the opcode
-	opcode = opcode & 0b01111111
-	payload = extract_payload(bin, address, opcode, paytype)
-	uart.queue.task_done()
-	return payload
+    '''requests vearables from the microcontroler
+    '''
+    dgram = form_datagram(address, opcode)
+    uart.putcs(dgram)
+    bin = uart.queue.get()
+    #clear the MSB of the opcode
+    opcode = opcode & 0b01111111
+    payload = extract_payload(bin, address, opcode, paytype)
+    uart.queue.task_done()
+    return payload
 
 
 def stop_all():
-	dgram = form_datagram(AD_ALL, ALL_STOP)
-	uart.putcs(dgram)
+    dgram = form_datagram(AD_ALL, ALL_STOP)
+    uart.putcs(dgram)
 
 ### --- Device Classes --- ###
 '''
 Motor Object
-	Control motors by setting the degrees to the desired distance: make conversion from meters
-	to degrees in your own code
+    Control motors by setting the degrees to the desired distance: make conversion from meters
+    to degrees in your own code
 '''
 class Motor(object):
-	'''Motor class uesed with the penguin pi
-	'''
+    '''Motor class uesed with the penguin pi
+    '''
 
-	#creates and instance of Motor
-	def __init__(self, address):
-		self.address = address
-		#this might be superflous...
-		self.speedDPS = 0
-		self.degrees = 0
-		self.dir = 0
-		self.encoderMode = 1
-		self.gainP = 0
-		self.gainI = 0
-		self.gainD = 0
+    #creates and instance of Motor
+    def __init__(self, address):
+        self.address = address
+        #this might be superflous...
+        self.speedDPS = 0
+        self.degrees = 0
+        self.dir = 0
+        self.encoderMode = 1
+        self.gainP = 0
+        self.gainI = 0
+        self.gainD = 0
 
 #SETTERS
-	def set_power(self, speed):
-		self.speedDPS = speed
-		dgram = form_datagram(self.address, MOTOR_SET_SPEED_DPS, speed, 'int')
-		uart.putcs(dgram)
+    def set_power(self, speed):
+        self.speedDPS = speed
+        dgram = form_datagram(self.address, MOTOR_SET_SPEED_DPS, speed, 'int')
+        uart.putcs(dgram)
 
-	#not implmented on the micro controler
-	def set_degrees(self, degrees):
-		self.degrees = degrees
-		dgram = form_datagram(self.address, MOTOR_SET_DEGREES, degrees, 'int')
-		uart.putcs(dgram)
+    #not implmented on the micro controler
+    def set_degrees(self, degrees):
+        self.degrees = degrees
+        dgram = form_datagram(self.address, MOTOR_SET_DEGREES, degrees, 'int')
+        uart.putcs(dgram)
 
-	def set_direction(self, direction):
-		self.dir = direction
-		dgram = form_datagram(self.address, MOTOR_SET_DIRECTION, direction, 'char')
-		uart.putcs(dgram)
+    def set_direction(self, direction):
+        self.dir = direction
+        dgram = form_datagram(self.address, MOTOR_SET_DIRECTION, direction, 'char')
+        uart.putcs(dgram)
 
-	def set_encoder_mode(self, mode):
-		self.encoderMode = mode
-		dgram = form_datagram(self.address, MOTOR_SET_ENC_MODE, mode, 'char')
-		uart.putcs(dgram)
+    def set_encoder_mode(self, mode):
+        self.encoderMode = mode
+        dgram = form_datagram(self.address, MOTOR_SET_ENC_MODE, mode, 'char')
+        uart.putcs(dgram)
 
-	#works with set_degrees not implmented on the microcontroler
-	def set_PID(self, kP=0, kI=0, kD=0):
-		self.gainP = kP
-		self.gainI = kI
-		self.gainD = kD
-		dgram = form_datagram(self.address, MOTOR_SET_GAIN_P, kP, 'float')
-		uart.putcs(dgram)
-		dgram = form_datagram(self.address, MOTOR_SET_GAIN_I, kI, 'float')
-		uart.putcs(dgram)
-		dgram = form_datagram(self.address, MOTOR_SET_GAIN_D, kD, 'float')
-		uart.putcs(dgram)
+    #works with set_degrees not implmented on the microcontroler
+    def set_PID(self, kP=0, kI=0, kD=0):
+        self.gainP = kP
+        self.gainI = kI
+        self.gainD = kD
+        dgram = form_datagram(self.address, MOTOR_SET_GAIN_P, kP, 'float')
+        uart.putcs(dgram)
+        dgram = form_datagram(self.address, MOTOR_SET_GAIN_I, kI, 'float')
+        uart.putcs(dgram)
+        dgram = form_datagram(self.address, MOTOR_SET_GAIN_D, kD, 'float')
+        uart.putcs(dgram)
 
 #GETTERS
-	def get_speed(self):
-		self.speedDPS = get_variable(self.address, MOTOR_GET_SPEED_DPS, 'int')
-		return self.speedDPS
+    def get_speed(self):
+        self.speedDPS = get_variable(self.address, MOTOR_GET_SPEED_DPS, 'int')
+        return self.speedDPS
 
-	def get_ticks(self):
-		self.degrees = get_variable(self.address, MOTOR_GET_DEGREES, 'int')
-		return self.degrees
+    def get_ticks(self):
+        self.degrees = get_variable(self.address, MOTOR_GET_DEGREES, 'int')
+        return self.degrees
 
-	def get_direction(self):
-		self.dir = get_variable(self.address, MOTOR_GET_DIRECTION, 'char')
-		return self.dir
+    def get_direction(self):
+        self.dir = get_variable(self.address, MOTOR_GET_DIRECTION, 'char')
+        return self.dir
 
-	def get_encoder_mode(self):
-		self.encoderMode = get_variable(self.address, MOTOR_GET_ENC_MODE, 'char')
-		return self.encoderMode
+    def get_encoder_mode(self):
+        self.encoderMode = get_variable(self.address, MOTOR_GET_ENC_MODE, 'char')
+        return self.encoderMode
 
-	def get_PID(self):
-		kP=kI=kD = -1
+    def get_PID(self):
+        kP=kI=kD = -1
 
-		kP = get_variable(self.address, MOTOR_GET_GAIN_P, 'float')
-		self.gainP = kP
+        kP = get_variable(self.address, MOTOR_GET_GAIN_P, 'float')
+        self.gainP = kP
 
-		kI = get_variable(self.address, MOTOR_GET_GAIN_I, 'float')
-		self.gainI = kI
+        kI = get_variable(self.address, MOTOR_GET_GAIN_I, 'float')
+        self.gainI = kI
 
-		kD = get_variable(self.address, MOTOR_GET_GAIN_D, 'float')
-		self.gainD = kD
+        kD = get_variable(self.address, MOTOR_GET_GAIN_D, 'float')
+        self.gainD = kD
 
-		return kP, kI, kD
+        return kP, kI, kD
 
-	'''def get_all(self):
-		self.get_speed()
-		self.get_ticks()
-		self.get_direction()
-		self.get_PID()
-		self.get_encoder_mode()'''
+    '''def get_all(self):
+        self.get_speed()
+        self.get_ticks()
+        self.get_direction()
+        self.get_PID()
+        self.get_encoder_mode()'''
 
 
 '''
 Servo Object
-	position alters the servos output shaft, between the minimum and maximum ranges
-	position is clipped to max/min on the ATMEGA side
-	neutral position is typically 90 (degrees), in a range of 0-180 (degrees)
-	#PWM range can be adjusted to allow for servos with a wider range of control
+    position alters the servos output shaft, between the minimum and maximum ranges
+    position is clipped to max/min on the ATMEGA side
+    neutral position is typically 90 (degrees), in a range of 0-180 (degrees)
+    #PWM range can be adjusted to allow for servos with a wider range of control
 '''
 class Servo(object):
 
-	def __init__(self, address):
-		self.address = address
-		self.state = 0
-		self.position = 90
-		self.minRange = 0
-		self.maxRange = 180
-		self.minPWMRange = 1500
-		self.maxPWMRange = 3000
+    def __init__(self, address):
+        self.address = address
+        self.state = 0
+        self.position = 90
+        self.minRange = 0
+        self.maxRange = 180
+        self.minPWMRange = 1500
+        self.maxPWMRange = 3000
 
 #SETTERS
-	def set_position(self, position):
-		self.position = position
-		dgram = form_datagram(self.address, SERVO_SET_POSITION, position, 'int')
-		uart.putcs(dgram)
+    def set_position(self, position):
+        self.position = position
+        dgram = form_datagram(self.address, SERVO_SET_POSITION, position, 'int')
+        uart.putcs(dgram)
 
-	def set_state(self, state):
-		self.state = state
-		dgram = form_datagram(self.address, SERVO_SET_STATE, state, 'char')
-		uart.putcs(dgram)
+    def set_state(self, state):
+        self.state = state
+        dgram = form_datagram(self.address, SERVO_SET_STATE, state, 'char')
+        uart.putcs(dgram)
 
-	def set_range(self, minimum, maximum):
-		self.minRange = minimum
-		self.maxRange = maximum
-		dgram = form_datagram(self.address, SERVO_SET_MIN_RANGE, minimum, 'int')
-		uart.putcs(dgram)
-		dgram = form_datagram(self.address, SERVO_SET_MAX_RANGE, maximum, 'int')
-		uart.putcs(dgram)
+    def set_range(self, minimum, maximum):
+        self.minRange = minimum
+        self.maxRange = maximum
+        dgram = form_datagram(self.address, SERVO_SET_MIN_RANGE, minimum, 'int')
+        uart.putcs(dgram)
+        dgram = form_datagram(self.address, SERVO_SET_MAX_RANGE, maximum, 'int')
+        uart.putcs(dgram)
 
 #GETTERS
-	def get_position(self):
-		self.position = get_variable(self.address, SERVO_GET_POSITION, 'int')
-		return self.position
+    def get_position(self):
+        self.position = get_variable(self.address, SERVO_GET_POSITION, 'int')
+        return self.position
 
-	def get_state(self):
-		self.state = get_variable(self.address, SERVO_GET_STATE, 'char')
-		return self.state
+    def get_state(self):
+        self.state = get_variable(self.address, SERVO_GET_STATE, 'char')
+        return self.state
 
-	def get_range(self):
-		self.minRange = get_variable(self.address, SERVO_GET_MIN_RANGE, 'int')
-		self.maxRange = get_variable(self.address, SERVO_GET_MAX_RANGE, 'int')
+    def get_range(self):
+        self.minRange = get_variable(self.address, SERVO_GET_MIN_RANGE, 'int')
+        self.maxRange = get_variable(self.address, SERVO_GET_MAX_RANGE, 'int')
 
-		return self.minRange, self.maxRange
+        return self.minRange, self.maxRange
 
-	def get_PWM_range(self):
-		self.minPWMRange = get_variable(self.address, SERVO_GET_MIN_PWM, 'int')
-		self.maxPWMRange = get_variable(self.address, SERVO_GET_MAX_PWM, 'int')
+    def get_PWM_range(self):
+        self.minPWMRange = get_variable(self.address, SERVO_GET_MIN_PWM, 'int')
+        self.maxPWMRange = get_variable(self.address, SERVO_GET_MAX_PWM, 'int')
 
-		return self.minPWMRange, self.maxPWMRange
+        return self.minPWMRange, self.maxPWMRange
 
-	def get_all(self):
-		self.get_position()
-		self.get_state()
-		self.get_range()
-		self.get_PWM_range()
+    def get_all(self):
+        self.get_position()
+        self.get_state()
+        self.get_range()
+        self.get_PWM_range()
 
 '''
 LED object
-	state overrides brightness
-	brightness is a percentage
-	count is a multiplier of 21us, and determines how long the led is lit for
+    state overrides brightness
+    brightness is a percentage
+    count is a multiplier of 21us, and determines how long the led is lit for
 '''
 class LED(object):
-	def __init__(self, address):
-		self.address = address
-		self.state = 0
-		self.brightness = 0
-		self.count = 0
+    def __init__(self, address):
+        self.address = address
+        self.state = 0
+        self.brightness = 0
+        self.count = 0
 #SETTERS
-	def set_state(self, state):
-		self.state = state
-		dgram = form_datagram(self.address, LED_SET_STATE, state, 'char')
-		uart.putcs(dgram)
+    def set_state(self, state):
+        self.state = state
+        dgram = form_datagram(self.address, LED_SET_STATE, state, 'char')
+        uart.putcs(dgram)
 
-	def set_brightness(self, brightness):
-		self.brightness = brightness
-		dgram = form_datagram(self.address, LED_SET_BRIGHTNESS, brightness, 'char')
-		uart.putcs(dgram)
+    def set_brightness(self, brightness):
+        self.brightness = brightness
+        dgram = form_datagram(self.address, LED_SET_BRIGHTNESS, brightness, 'char')
+        uart.putcs(dgram)
 
-	def set_count(self, count):
-		self.count = count
-		dgram = form_datagram(self.address, LED_SET_COUNT, count, 'int')
-		uart.putcs(dgram)
+    def set_count(self, count):
+        self.count = count
+        dgram = form_datagram(self.address, LED_SET_COUNT, count, 'int')
+        uart.putcs(dgram)
 
 #GETTERS
-	def get_state(self):
-		self.state = get_variable(self.address, LED_GET_STATE, 'char')
-		return self.state
+    def get_state(self):
+        self.state = get_variable(self.address, LED_GET_STATE, 'char')
+        return self.state
 
-	def get_brightness(self):
-		self.brightness = get_variable(self.address, LED_GET_BRIGHTNESS, 'char')
-		return self.brightness
+    def get_brightness(self):
+        self.brightness = get_variable(self.address, LED_GET_BRIGHTNESS, 'char')
+        return self.brightness
 
-	def get_count(self):
-		self.count = get_variable(self.address, LED_GET_COUNT, 'int')
-		return self.count
+    def get_count(self):
+        self.count = get_variable(self.address, LED_GET_COUNT, 'int')
+        return self.count
 
-	def get_all(self):
-		self.get_state()
-		self.get_brightness()
-		self.get_count()
+    def get_all(self):
+        self.get_state()
+        self.get_brightness()
+        self.get_count()
 
 
 '''
 Display object
-	dual digit 7 segment display
-	can set each digit individualy: will override the value
+    dual digit 7 segment display
+    can set each digit individualy: will override the value
 '''
 class Display(object):
-	def __init__(self, address):
-		self.address = address
-		self.value = 0
-		self.digit0 = 0
-		self.digit1 = 0
+    def __init__(self, address):
+        self.address = address
+        self.value = 0
+        self.digit0 = 0
+        self.digit1 = 0
 #SETTERS
-	def set_value(self, value):
-		self.value = value
-		dgram = form_datagram(self.address, DISPLAY_SET_VALUE, value, 'char')
-		uart.putcs(dgram)
+    def set_value(self, value):
+        self.value = value
+        dgram = form_datagram(self.address, DISPLAY_SET_VALUE, value, 'char')
+        uart.putcs(dgram)
 
-	def set_digit0(self, digit0):
-		self.digit0 = digit0
-		dgram = form_datagram(self.address, DISPLAY_SET_DIGIT_0, digit0, 'char')
-		uart.putcs(dgram)
+    def set_digit0(self, digit0):
+        self.digit0 = digit0
+        dgram = form_datagram(self.address, DISPLAY_SET_DIGIT_0, digit0, 'char')
+        uart.putcs(dgram)
 
-	def set_digit1(self, digit1):
-		self.digit1 = digit1
-		dgram = form_datagram(self.address, DISPLAY_SET_DIGIT_1, digit1, 'char')
-		uart.putcs(dgram)
+    def set_digit1(self, digit1):
+        self.digit1 = digit1
+        dgram = form_datagram(self.address, DISPLAY_SET_DIGIT_1, digit1, 'char')
+        uart.putcs(dgram)
 
 #GETTERS
-	def get_value(self):
-		self.value = get_variable(self.address, DISPLAY_GET_VALUE, 'char')
-		return self.value
+    def get_value(self):
+        self.value = get_variable(self.address, DISPLAY_GET_VALUE, 'char')
+        return self.value
 
-	def get_digit0(self):
-		self.digit0 = get_variable(self.address, DISPLAY_GET_DIGIT_0, 'char')
-		return self.digit0
+    def get_digit0(self):
+        self.digit0 = get_variable(self.address, DISPLAY_GET_DIGIT_0, 'char')
+        return self.digit0
 
-	def get_digit1(self):
-		self.digit1 = get_variable(self.address, DISPLAY_GET_DIGIT_1, 'char')
-		return self.digit1
+    def get_digit1(self):
+        self.digit1 = get_variable(self.address, DISPLAY_GET_DIGIT_1, 'char')
+        return self.digit1
 
-	def get_all(self):
-		self.get_value()
-		self.get_digit0()
-		self.get_digit1()
+    def get_all(self):
+        self.get_value()
+        self.get_digit0()
+        self.get_digit1()
 
 '''
 Button Object
-	Controls the behaviour of the onboard buttons
+    Controls the behaviour of the onboard buttons
 '''
 class Button(object):
-	def __init__(self, address):
-		self.address = address
-		self.program_mode = 0
-		self.pin_mode = 0
+    def __init__(self, address):
+        self.address = address
+        self.program_mode = 0
+        self.pin_mode = 0
 
 #SETTERS
-	def set_program_mode(self, program_mode):
-		self.program_mode = program_mode
-		dgram = form_datagram(self.address, BUTTON_SET_PROGRAM_MODE, program_mode, 'char')
-		uart.putcs(dgram)
+    def set_program_mode(self, program_mode):
+        self.program_mode = program_mode
+        dgram = form_datagram(self.address, BUTTON_SET_PROGRAM_MODE, program_mode, 'char')
+        uart.putcs(dgram)
 
-	def set_pin_mode(self, pin_mode):
-		self.pin_mode = pin_mode
-		dgram = form_datagram(self.address, BUTTON_SET_PIN_MODE, pin_mode, 'char')
-		uart.putcs(dgram)
+    def set_pin_mode(self, pin_mode):
+        self.pin_mode = pin_mode
+        dgram = form_datagram(self.address, BUTTON_SET_PIN_MODE, pin_mode, 'char')
+        uart.putcs(dgram)
 
 #GETTERS
-	def get_program_mode(self):
-		self.program_mode = get_variable(self.address, BUTTON_GET_PROGRAM_MODE, 'char')
-		return self.program_mode
+    def get_program_mode(self):
+        self.program_mode = get_variable(self.address, BUTTON_GET_PROGRAM_MODE, 'char')
+        return self.program_mode
 
-	def get_pin_mode(self):
-		self.pin_mode = get_variable(self.address, BUTTON_GET_PIN_MODE, 'char')
-		return self.pin_mode
+    def get_pin_mode(self):
+        self.pin_mode = get_variable(self.address, BUTTON_GET_PIN_MODE, 'char')
+        return self.pin_mode
 
-	def get_all(self):
-		self.get_program_mode()
-		self.get_pin_mode()
+    def get_all(self):
+        self.get_program_mode()
+        self.get_pin_mode()
 
 
 '''
 ADC Object
-	used to retrieve ADC readings from the atmega.
-	currently the battery voltage and current are being monitored
-	these are AD_ADC_V and AD_ADC_C respectively.
+    used to retrieve ADC readings from the atmega.
+    currently the battery voltage and current are being monitored
+    these are AD_ADC_V and AD_ADC_C respectively.
 '''
 class AnalogIn(object):
 
-	def __init__(self, address):
-		self.address = address
-		self.raw = 0
-		self.value = 0
-		self.scale = 0
+    def __init__(self, address):
+        self.address = address
+        self.raw = 0
+        self.value = 0
+        self.scale = 0
 
 #SETTERS
-	def set_scale(self, scale):
-		self.scale = scale
-		dgram = form_datagram(self.address, ADC_SET_SCALE, scale, 'float')
-		uart.putcs(dgram)
+    def set_scale(self, scale):
+        self.scale = scale
+        dgram = form_datagram(self.address, ADC_SET_SCALE, scale, 'float')
+        uart.putcs(dgram)
 
 #GETTERS
-	def get_scale(self):
-		self.scale = get_variable(self.address, ADC_GET_SCALE, 'float')
-		return self.scale
+    def get_scale(self):
+        self.scale = get_variable(self.address, ADC_GET_SCALE, 'float')
+        return self.scale
 
-	def get_raw(self):
-		self.raw = get_variable(self.address, ADC_GET_RAW, 'int')
-		return self.raw
+    def get_raw(self):
+        self.raw = get_variable(self.address, ADC_GET_RAW, 'int')
+        return self.raw
 
-	def get_value(self):
-		self.value = get_variable(self.address, ADC_GET_READING, 'float')
-		return self.value
+    def get_value(self):
+        self.value = get_variable(self.address, ADC_GET_READING, 'float')
+        return self.value
 
-	def get_all(self):
-		self.get_scale()
-		self.get_raw()
-		self.get_value()
+    def get_all(self):
+        self.get_scale()
+        self.get_raw()
+        self.get_value()
