@@ -118,6 +118,8 @@ SET_RESET = 0xDD
 GET_RESET = 0x11
 
 class UART(object):
+	"""Setup UART comunication between the raspberry pi and the microcontroler
+	"""
 	def __init__(self, port='/dev/attyAMA0', baud=115200):
 		self.ser = serial.Serial(	port = port,
 									baudrate = baud,
@@ -131,32 +133,43 @@ class UART(object):
 		self.close_event = threading.Event()
 
 	def start(self):
+		"""Start UART comunication between the raspberry pi and the
+		microcontroler
+		"""
 		#opens serial interface and starts recieve handler
 		if self.ser.isOpen() is False:
 			self.ser.open()
+
+		#reset the buffers
 		self.ser.reset_input_buffer()
 		self.ser.reset_output_buffer()
 
+		#display that connection is started
 		print("Transmitting on " + self.ser.name)
 		print("Serial settings: " + str(self.ser.baudrate) + " " + str(self.ser.bytesize) + " " + self.ser.parity + " " + str(self.ser.stopbits))
 
+		#start the recive thread
 		self.receive_thread.start()
 
 	def stop(self):
-		#sets uart_recv close event and stops the thread, destructs serial interface
+		'''Close the comunication between the raspberry pi and the
+		microcontroler
+		'''
 		self.close_event.set()
 		self.receive_thread.join()
 		self.ser.close()
 		self.ser.__del__()
 
 	def flush(self):
-		#flushes input and output buffer, clears queue
+		'''flushes input and output buffer, clears queue
+		'''
 		self.ser.reset_input_buffer()
 		self.ser.reset_output_buffer()
 
 
 	def putcs(self, dgram):
-		#function: prepends startbyte and puts datagram into write buffer
+		'''function: prepends startbyte and puts datagram into write buffer
+		'''
 		dgram = (struct.pack('!B', STARTBYTE)) + dgram
 		self.ser.write(dgram)
 
@@ -194,48 +207,53 @@ class UART(object):
 
 			#time.sleep(0.01)'''
 
-    def uart_recv(self):
-            #thread: receives command packets, and prints other messages
-            while not self.close_event.is_set():
-                    com = self.ser.read(size=1)
-                    #print('+', end='', flush=True, file=sys.stderr)
-                    if len(com) == 0:
-                            continue;
-                    if ord(com) == 0:
-                            continue
-                    elif ord(com) == STARTBYTE:
-                            paylen = self.ser.read()
-                            paylenint, = struct.unpack("!B", paylen)
-                            dgram = self.ser.read(paylenint-2)
-                            crcDgram = self.ser.read()
+	def uart_recv(self):
+	        '''thread: receives command packets, and prints other messages
+			'''
+			while not self.close_event.is_set():
+					#read first byte
+	                com = self.ser.read(size=1)
+	                if len(com) == 0:
+	                        continue;
+	                if ord(com) == 0:
+	                        continue
+	                elif ord(com) == STARTBYTE:
+							#extract the packet from the UART
+	                        paylen = self.ser.read()
+	                        paylenint, = struct.unpack("!B", paylen)
+	                        dgram = self.ser.read(paylenint-2)
+	                        crcDgram = self.ser.read()
+	                        dgram = paylen + dgram
+	                        crcDgram, = struct.unpack("!B", crcDgram)\
+							#run crcCalc to ensure correct data
+	                        crcCalc = crc8(dgram, paylenint-1)
+	                        if crcCalc == crcDgram:
+	                                self.queue.put(dgram)
+	                        else:
+	                                #todo: throw an exception?
+	                                print("ERROR: CRC Failed (Python)")
+	                                print("Calculated CRC: " + hex(crcCalc) + " Recieved CRC: " + hex(crcDgram))
 
-                            dgram = paylen + dgram
+	                else: #displayable
+	                        if ord(com) == 10:
+	                                print(" ")
+	                        else:
+	                                print(com.decode("utf-8", "ignore"))
 
-                            crcDgram, = struct.unpack("!B", crcDgram)
-                            crcCalc = crc8(dgram, paylenint-1)
-
-                            if crcCalc == crcDgram:
-                                    self.queue.put(dgram)
-                            else:
-                                    #todo: throw an exception?
-                                    print("ERROR: CRC Failed (Python)")
-                                    print("Calculated CRC: " + hex(crcCalc) + " Recieved CRC: " + hex(crcDgram))
-
-                    else: #displayable
-                            if ord(com) == 10:
-                                    print(" ")
-                            else:
-                                    print(com.decode("utf-8", "ignore"))
-
-
+#create UART object
 uart = UART("/dev/ttyAMA0", 115200)
 
 
+
 def init():
+	'''Initlise the UART object
+	'''
 	time.sleep(0.5)
 	uart.start()
 
 def close():
+	'''Close the UART object
+	'''
 	stop_all()
 	time.sleep(1)
 	uart.stop()
@@ -243,6 +261,8 @@ def close():
 
 
 def crc8(word, length):
+	'''cyclic redundancy check
+	'''
 	crc = 0
 	for i in range(0, length):
 		crc = crc ^ word[i]
@@ -255,18 +275,25 @@ def crc8(word, length):
 
 
 def print_hex(bin):
+	'''print hex value
+	'''
 	print(" ".join(hex(n) for n in bin))
 
 
 def form_datagram(address, opCode, payload=0x00, paytype=''):
+	'''Create the datagram to sent to the microcontroler
+	'''
 	if paytype == 'char':
-		bin = ((struct.pack("!BBb", address, opCode, payload))) #form a bytestring of the payload
+		#form a bytestring of the payload
+		bin = ((struct.pack("!BBb", address, opCode, payload)))
 	elif paytype == 'int':
-		bin = ((struct.pack("!BBh", address, opCode, payload))) #h represents a 2 byte signed int
+		#h represents a 2 byte signed int
+		bin = ((struct.pack("!BBh", address, opCode, payload)))
 	elif paytype == 'float':
 		bin = ((struct.pack("!BBf", address, opCode, payload)))
 	elif paytype == '':
-		bin = ((struct.pack("!BB", address, opCode))) #empty payload: probably a getter
+		#empty payload: probably a getter
+		bin = ((struct.pack("!BB", address, opCode)))
 	else :
 		print("ERROR: Incompatible Payload Type Defined. (Python)")
 		return 0
@@ -278,6 +305,8 @@ def form_datagram(address, opCode, payload=0x00, paytype=''):
 
 
 def extract_payload(bin, address, opcode, paytype):
+	'''Extracts payload from the microcontroler
+	'''
 	if paytype == 'char':
 		upackstr = "!b"
 	elif paytype == 'int':
@@ -298,6 +327,8 @@ def extract_payload(bin, address, opcode, paytype):
 
 
 def get_variable(address, opcode, paytype, timeout=2):
+	'''requests vearables from the microcontroler
+	'''
 	dgram = form_datagram(address, opcode)
 	uart.putcs(dgram)
 	bin = uart.queue.get()
@@ -319,7 +350,10 @@ Motor Object
 	to degrees in your own code
 '''
 class Motor(object):
+	'''Motor class uesed with the penguin pi
+	'''
 
+	#creates and instance of Motor
 	def __init__(self, address):
 		self.address = address
 		#this might be superflous...
@@ -337,6 +371,7 @@ class Motor(object):
 		dgram = form_datagram(self.address, MOTOR_SET_SPEED_DPS, speed, 'int')
 		uart.putcs(dgram)
 
+	#not implmented on the micro controler
 	def set_degrees(self, degrees):
 		self.degrees = degrees
 		dgram = form_datagram(self.address, MOTOR_SET_DEGREES, degrees, 'int')
@@ -352,6 +387,7 @@ class Motor(object):
 		dgram = form_datagram(self.address, MOTOR_SET_ENC_MODE, mode, 'char')
 		uart.putcs(dgram)
 
+	#works with set_degrees not implmented on the microcontroler
 	def set_PID(self, kP=0, kI=0, kD=0):
 		self.gainP = kP
 		self.gainI = kI
@@ -394,12 +430,12 @@ class Motor(object):
 
 		return kP, kI, kD
 
-	def get_all(self):
+	'''def get_all(self):
 		self.get_speed()
 		self.get_ticks()
 		self.get_direction()
 		self.get_PID()
-		self.get_encoder_mode()
+		self.get_encoder_mode()'''
 
 
 '''
