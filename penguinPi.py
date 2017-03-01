@@ -208,8 +208,8 @@ class UART(object):
             #time.sleep(0.01)'''
 
     def uart_recv(self):
-            '''thread: receives command packets, and prints other messages
-            '''
+        '''thread: receives command packets, and prints other messages
+        '''
         while not self.close_event.is_set():
             #read first byte
             com = self.ser.read(size=1)
@@ -430,12 +430,12 @@ class Motor(object):
 
         return kP, kI, kD
 
-    '''def get_all(self):
+    def get_all(self):
         self.get_speed()
         self.get_ticks()
         self.get_direction()
         self.get_PID()
-        self.get_encoder_mode()'''
+        self.get_encoder_mode()
 
 
 '''
