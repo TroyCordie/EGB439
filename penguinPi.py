@@ -160,7 +160,7 @@ class UART(object):
 		dgram = (struct.pack('!B', STARTBYTE)) + dgram
 		self.ser.write(dgram)
 
-	def uart_recv(self):
+	'''def uart_recv(self):
 		#thread: receives command packets, and prints other messages
 		while not self.close_event.is_set():
 
@@ -192,7 +192,40 @@ class UART(object):
 					else:
 						print(com.decode("utf-8", "ignore"), end="")
 
-			#time.sleep(0.01)
+			#time.sleep(0.01)'''
+
+    def uart_recv(self):
+            #thread: receives command packets, and prints other messages
+            while not self.close_event.is_set():
+                    com = self.ser.read(size=1)
+                    #print('+', end='', flush=True, file=sys.stderr)
+                    if len(com) == 0:
+                            continue;
+                    if ord(com) == 0:
+                            continue
+                    elif ord(com) == STARTBYTE:
+                            paylen = self.ser.read()
+                            paylenint, = struct.unpack("!B", paylen)
+                            dgram = self.ser.read(paylenint-2)
+                            crcDgram = self.ser.read()
+
+                            dgram = paylen + dgram
+
+                            crcDgram, = struct.unpack("!B", crcDgram)
+                            crcCalc = crc8(dgram, paylenint-1)
+
+                            if crcCalc == crcDgram:
+                                    self.queue.put(dgram)
+                            else:
+                                    #todo: throw an exception?
+                                    print("ERROR: CRC Failed (Python)")
+                                    print("Calculated CRC: " + hex(crcCalc) + " Recieved CRC: " + hex(crcDgram))
+
+                    else: #displayable
+                            if ord(com) == 10:
+                                    print(" ")
+                            else:
+                                    print(com.decode("utf-8", "ignore"))
 
 
 uart = UART("/dev/ttyAMA0", 115200)
