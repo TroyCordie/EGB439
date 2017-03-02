@@ -99,12 +99,18 @@ client_address = None
 sock.setblocking(0)
 sock.listen(1)
 
-f = os.popen('ifconfig eth0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
-ip = f.read()
-ip = map(int, ip.split('.'))
+try:
+    f = os.popen('sudo ifconfig wlan0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
+    ip = f.read()
+    ip = bytes(map(int, ip.split('.')))
+    display.set_mode('x')
+    display.set_value(ip[3]);
+except ValueError:
+    display.set_mode('d')
+    display.set_value(-1);
 
-display.set_mode('x');
-display.set_value(ip[3]);
+
+
 
 while True:
 	# Check if any new commands have been received
