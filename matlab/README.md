@@ -1,4 +1,5 @@
-The code here allows you to control the robot and access its camera from the MATLAB environment.
+The code here allows you to control the robot and access its camera from the MATLAB environment.  You need to have the file
+```PiBot.m``` in the current directory or on your MATLAB path.  The Raspberry Pi needs to be running the Python server code (```server-camera.py``` and ```server-motor.py```) in the folder above.
 
 We start by connecting to the remote Raspberry Pi
 ```
