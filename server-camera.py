@@ -20,22 +20,26 @@ IM_HEIGHT = 240
 
 FN_GET_IMAGE = 'getImageFromCamera'
 
+debug = False;
+
 """
 " Helper functions
 """
 def executeRequestedFunction(requestData, connection):
 	# Splice and dice
 	data = requestData.decode("utf-8").split(',')
-	print(data[1])
+	if debug:
+		print(data[1])
 	fn = data[0]
 	args = data[1:]
 
 	# Decide what function should be run, and attempt to run it with the arguments
 	if fn == FN_GET_IMAGE:
-		print('getImageFromCamera() called received!', file=sys.stderr) #>>sys.stderr, 'getImageFromCamera() called received!'
+		if debug:
+			print('getImageFromCamera() called received!', file=sys.stderr)
 
 		# Ensure everything is in a safe state
-		stream.seek(0) # go to srart of stream
+		stream.seek(0) # go to start of stream
 		stream.truncate() # Clears the stream and makes it safe
 
 		# Capture the image
@@ -53,6 +57,7 @@ def executeRequestedFunction(requestData, connection):
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = (IP_ADDRESS, PORT)
 print('Starting up on {0}, port {1}' .format(server_address[0], server_address[1]), file=sys.stderr) #>>sys.stderr, 'Starting up on %s, port %s' % server_address
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind(server_address)
 
 # Get the camera up and running
@@ -89,6 +94,3 @@ while True:
 		# Clean up the connection if it exists
 		if connection is not None:
 			connection.close()
-
- 	# Sleep for the sake of it
-	#time.sleep(.1)

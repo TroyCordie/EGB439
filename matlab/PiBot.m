@@ -78,30 +78,31 @@ classdef PiBot < handle
             data = [PiBot.FN_MOTOR_TICKS,PiBot.FN_ARG_SEPARATOR 'A']; % needed for the Pi code
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
-            iter = 0;
+%            iter = 0;
             % We don't know the size of the file so...
-            c='';
-            s='';
-            while ~strcmp(char(c),':')
-                c = ( fread(obj.TCP_MOTORS,1,'char') );
-                s=[s c];
-                iter = iter + 1;
-                if iter > 30 % the tick array should never be this large, which means unsuccessful read...
-                    disp('Tick retreval timeout! (PiBot.m ~line 103) returning NULL tick value ...');
-                    pause(0.1);
-                    ticks = [];
-                    fclose(obj.TCP_MOTORS);
-                    disp('Turning all motors OFF') % this is a precaution, you can comment out this if you want
-                    setMotorSpeeds(['A','B','C','D'], [0,0,0,0]);
-                    return;
-                end
-            end
+%             c='';
+%             s='';
+%             while ~strcmp(char(c),'\n')
+%                 c = ( fread(obj.TCP_MOTORS,1,'char') );
+%                 s=[s c];
+%                 iter = iter + 1;
+%                 if iter > 30 % the tick array should never be this large, which means unsuccessful read...
+%                     disp('Tick retreval timeout! (PiBot.m ~line 103) returning NULL tick value ...');
+%                     pause(0.1);
+%                     ticks = [];
+%                     fclose(obj.TCP_MOTORS);
+%                     disp('Turning all motors OFF') % this is a precaution, you can comment out this if you want
+%                     setMotorSpeeds(['A','B','C','D'], [0,0,0,0]);
+%                     return;
+%                 end
+%             end
 
+            s = fgetl(obj.TCP_MOTORS);
             fclose(obj.TCP_MOTORS);
 
             % Convert ticks to numerical array
-            ticks = sscanf(s,'%f',inf);
-
+%             ticks = sscanf(s,'%f',inf);
+            ticks = sscanf(s,'%d');
 
         end
     end
