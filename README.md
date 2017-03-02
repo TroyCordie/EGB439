@@ -3,6 +3,11 @@
     PenguinPi using the Raspbian Jessie operating system. Please note all code
     stored here will restore you robot to default and changes will be lost
   - if you wish to use a diffrent operating system please speak to your tutor
+  
+Folders
+  - ```matlab``` runs on your computer and talks to the robot
+  - ```python``` Python 3 code that runs on the Raspberry Pi
+  - ```atmelstudio``` C code that runs on the Atmel processor on the shield that connects the Pi to the robot hardware
 
 ##Defaults
 ###Raspberry pi login
