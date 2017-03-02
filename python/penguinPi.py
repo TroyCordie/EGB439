@@ -286,6 +286,9 @@ def form_datagram(address, opCode, payload=0x00, paytype=''):
     if paytype == 'char':
         #form a bytestring of the payload
         bin = ((struct.pack("!BBb", address, opCode, payload)))
+    elif paytype == 'uchar':
+        #form a bytestring of the payload
+        bin = ((struct.pack("!BBB", address, opCode, payload)))
     elif paytype == 'int':
         #h represents a 2 byte signed int
         bin = ((struct.pack("!BBh", address, opCode, payload)))
@@ -563,7 +566,7 @@ class Display(object):
 #SETTERS
     def set_value(self, value):
         self.value = value
-        dgram = form_datagram(self.address, DISPLAY_SET_VALUE, value, 'char')
+        dgram = form_datagram(self.address, DISPLAY_SET_VALUE, value, 'uchar')
         uart.putcs(dgram)
 
     def set_digit0(self, digit0):
