@@ -17,7 +17,12 @@ startup if you wish to change this please speak to your tutor
 
 ##network setup
 
-Open in nano (text editor) - sudo nano /etc/network/interfacesallow-hotplug wlan0
+Open in nano (text editor) - 
+```
+sudo nano /etc/network/interfacesallow-hotplug wlan0
+```
+and make the following changes
+```
 auto wlan0
 iface wlan0 inet dhcp
 wpa-ap-scan 1
@@ -27,9 +32,15 @@ wpa-proto RSN
 wpa-pairwise TKIP
 wpa-key-mgmt WPA-PSK
 wpa-psk "enb439123"
+```
 
 
-Open in nano (text editor) - sudo nano /etc/network/interfacesallow-hotplug wlan0
+Open in nano (text editor)
+```
+sudo nano /etc/network/interfacesallow-hotplug wlan0
+```
+and make the following changes
+```
 allow-hotplug wlan0
 auto wlan0
 iface wlan0 inet dhcp
@@ -40,3 +51,4 @@ wpa-proto RSN
 wpa-pairwise CCMP
 wpa-key-mgmt WPA-PSK
 wpa-psk "password"
+```
