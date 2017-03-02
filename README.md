@@ -22,12 +22,11 @@ startup if you wish to change this please speak to your tutor
 
 ##network setup
 
-Open in nano (text editor) - 
+Open in nano (text editor) and make the following changes - sudo nano /etc/network/interfaces
+
+###ENB439_TpLink_Config
 ```
-sudo nano /etc/network/interfacesallow-hotplug wlan0
-```
-and make the following changes
-```
+allow-hotplug wlan0 
 auto wlan0
 iface wlan0 inet dhcp
 wpa-ap-scan 1
@@ -39,12 +38,7 @@ wpa-key-mgmt WPA-PSK
 wpa-psk "enb439123"
 ```
 
-
-Open in nano (text editor)
-```
-sudo nano /etc/network/interfacesallow-hotplug wlan0
-```
-and make the following changes
+###Mobile Tethering
 ```
 allow-hotplug wlan0
 auto wlan0
