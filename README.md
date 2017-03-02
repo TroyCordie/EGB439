@@ -18,23 +18,14 @@ startup if you wish to change this please speak to your tutor
 ##network setup
 
 Open in nano (text editor) - sudo nano /etc/network/interfacesallow-hotplug wlan0
-
 auto wlan0
-
 iface wlan0 inet dhcp
-
 wpa-ap-scan 1
-
 wpa-scan-ssid 1
-
 wpa-ssid "ENB439"
-
 wpa-proto RSN
-
 wpa-pairwise TKIP
-
 wpa-key-mgmt WPA-PSK
-
 wpa-psk "enb439123"
 
 
