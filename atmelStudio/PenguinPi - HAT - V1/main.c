@@ -4,6 +4,10 @@
  * Created: 19/09/2016 19:19:41
  * Author : Jack
  */ 
+
+/*
+ * cpu is ATmega 328PB
+ */
 #define BAUD 115200
 #define F_CPU 12000000UL
 
@@ -250,7 +254,7 @@ void buttonLogic(Button *button, uint8_t btnVal){
 		}else if(btnVal == 1 && button->pinMode == 1){//rising edge
 			button->state ^= 1;
 		}
-		button->debounceCount = 500;
+		button->debounceCount = 500;    // stop further transitions being processed for 500 ticks
 	}
 }
 
@@ -708,7 +712,33 @@ void blueLEDPercent(uint8_t percent){
 }
 
 void update_dd7s(Display *display){//TODO: fix this up
-	uint8_t reg[2]= {0, 0};
+	uint8_t reg[2]= {0, 0}; // MS, LS digits
+    uint8_t value = display->value;
+    int8_t  svalue;
+
+    switch (display->mode) {
+    case 0: // hex mode
+        reg[0] = digit0[(value>>4) & 0x0f];
+        reg[1] = digit1[value & 0x0f];
+        break;
+    case 1: // unsigned decimal, light up the decimal point
+        if (value > 99)
+            value = 99;
+        reg[0] = digit0[(uint8_t)value/10];
+        reg[1] = digit1[(uint8_t)value%10]|SEGMENTDP_1;
+        break;
+    case 2: // signed decimal -9 to +9
+        svalue = (int8_t) value;
+        if (svalue < -9)
+            svalue = -9;
+        else if (svalue > 9)
+            svalue = 9;
+        if (svalue < 0)
+			reg[0] = SEGMENTG_0;    // minus sign
+        reg[1] = digit1[abs(value)]|SEGMENTDP_1;
+        break;
+    }
+    /*
 	//determine the best way to display the value
 	if(display->value != 0xFF){
 		displayBase10(reg, display->value);
@@ -717,6 +747,7 @@ void update_dd7s(Display *display){//TODO: fix this up
 	}
 	//if(display->digit0 != 0xFF) reg[0] = digit0[display->digit0];//digit0 and digit1 will override value
 	//if(display->digit1 != 0xFF) reg[1] = digit1[display->digit1];
+    */
 
 	i2cWritenBytes(reg, display->address, OUTPUT_0, 2);
 }
@@ -1312,6 +1343,13 @@ void parseDisplayOp(uint8_t *datagram, Display *display){
 				if(digit > 15) display->digit1 = 15;
 				else if(digit < -15) display->digit1 = -15;
 				else display->digit1 = digit;
+				display->draw = 1;
+			}else{
+				uart1_puts_P("ERROR: Incorrect Type\n");
+			}
+        case DISPLAY_SET_DISPLAY_MODE:
+			if(datagram[0] == 4){
+				display->mode = datagram[3];
 				display->draw = 1;
 			}else{
 				uart1_puts_P("ERROR: Incorrect Type\n");

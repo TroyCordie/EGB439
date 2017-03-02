@@ -90,6 +90,7 @@ LED_GET_COUNT = 0x83
 DISPLAY_SET_VALUE = 0x01
 DISPLAY_SET_DIGIT_1 = 0x02
 DISPLAY_SET_DIGIT_0 = 0x03
+DISPLAY_SET_MODE = 0x04
 
 DISPLAY_GET_VALUE = 0x81
 DISPLAY_GET_DIGIT_1 = 0x82
@@ -172,40 +173,6 @@ class UART(object):
         '''
         dgram = (struct.pack('!B', STARTBYTE)) + dgram
         self.ser.write(dgram)
-
-    '''def uart_recv(self):
-        #thread: receives command packets, and prints other messages
-        while not self.close_event.is_set():
-
-            if self.ser.inWaiting() > 0:
-                com = self.ser.read(1)
-                if ord(com) == 0:
-                    continue
-                elif ord(com) == STARTBYTE:
-                    paylen = self.ser.read()
-                    paylenint, = struct.unpack("!B", paylen)
-                    dgram = self.ser.read(paylenint-2)
-                    crcDgram = self.ser.read()
-
-                    dgram = paylen + dgram
-
-                    crcDgram, = struct.unpack("!B", crcDgram)
-                    crcCalc = crc8(dgram, paylenint-1)
-
-                    if crcCalc == crcDgram:
-                        self.queue.put(dgram)
-                    else:
-                        #todo: throw an exception?
-                        print("ERROR: CRC Failed (Python)")
-                        print("Calculated CRC: " + hex(crcCalc) + " Recieved CRC: " + hex(crcDgram))
-
-                else: #displayable
-                    if ord(com) == 10:
-                        print(" ")
-                    else:
-                        print(com.decode("utf-8", "ignore"), end="")
-
-            #time.sleep(0.01)'''
 
     def uart_recv(self):
         '''thread: receives command packets, and prints other messages
@@ -563,6 +530,7 @@ class Display(object):
         self.value = 0
         self.digit0 = 0
         self.digit1 = 0
+        self.mode = 0    # hex
 #SETTERS
     def set_value(self, value):
         self.value = value
@@ -577,6 +545,19 @@ class Display(object):
     def set_digit1(self, digit1):
         self.digit1 = digit1
         dgram = form_datagram(self.address, DISPLAY_SET_DIGIT_1, digit1, 'char')
+        uart.putcs(dgram)
+
+    def set_mode(self, mode):
+        if mode == 'x':     # hex %02x
+            self.mode = 0
+        elif mode == 'u':   # decimal %2d
+            self.mode = 1
+        elif mode == 'd':   # signed decimal %1d
+            self.mode = 2
+        else:
+            print("ERROR: Incompatible Payload Type Defined. (Python)")
+            return 0
+        dgram = form_datagram(self.address, DISPLAY_SET_MODE, mode, 'char')
         uart.putcs(dgram)
 
 #GETTERS
