@@ -56,6 +56,7 @@ typedef struct {
 	uint8_t value;
 	int8_t digit0;//if digit 0 or 1 are not -1, then .value is overridden
 	int8_t digit1;
+    int8_t mode;  // 0 is hex, 1 is unsigned decimal, 2 is signed decimal
 } Display;
 
 typedef struct {
@@ -274,6 +275,7 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define DISPLAY_SET_VALUE 0x01
 #define DISPLAY_SET_DIGIT_1 0x02
 #define DISPLAY_SET_DIGIT_0 0x03
+#define DISPLAY_SET_DISPLAY_MODE 0x04
 
 #define DISPLAY_GET_VALUE 0x81
 #define DISPLAY_GET_DIGIT_1 0x82
