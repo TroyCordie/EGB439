@@ -735,7 +735,7 @@ void update_dd7s(Display *display){//TODO: fix this up
             svalue = 9;
         if (svalue < 0)
 			reg[0] = SEGMENTG_0;    // minus sign
-        reg[1] = digit1[abs(value)]|SEGMENTDP_1;
+        reg[1] = digit1[abs(svalue)]|SEGMENTDP_1;
         break;
     }
     /*
