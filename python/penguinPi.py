@@ -95,6 +95,7 @@ DISPLAY_SET_MODE = 0x04
 DISPLAY_GET_VALUE = 0x81
 DISPLAY_GET_DIGIT_1 = 0x82
 DISPLAY_GET_DIGIT_0 = 0x83
+DISPLAY_GET_MODE = 0x84
 
 #BUTTON
 BUTTON_SET_PROGRAM_MODE = 0x01
@@ -534,6 +535,9 @@ class Display(object):
 #SETTERS
     def set_value(self, value):
         self.value = value
+        if self.mode == 2 and value < 0:
+            # signed mode for a negative number, form the 2's complement
+            value += 0xff;
         dgram = form_datagram(self.address, DISPLAY_SET_VALUE, value, 'uchar')
         uart.putcs(dgram)
 
@@ -572,6 +576,11 @@ class Display(object):
     def get_digit1(self):
         self.digit1 = get_variable(self.address, DISPLAY_GET_DIGIT_1, 'char')
         return self.digit1
+
+    def get_mode(self):
+        self.mode = get_variable(self.address, DISPLAY_GET_MODE, 'char')
+        return self.mode
+
 
     def get_all(self):
         self.get_value()

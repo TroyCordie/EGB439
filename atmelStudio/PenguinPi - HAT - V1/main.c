@@ -1347,7 +1347,7 @@ void parseDisplayOp(uint8_t *datagram, Display *display){
 			}else{
 				uart1_puts_P("ERROR: Incorrect Type\n");
 			}
-        case DISPLAY_SET_DISPLAY_MODE:
+        case DISPLAY_SET_MODE:
 			if(datagram[0] == 4){
 				display->mode = datagram[3];
 				display->draw = 1;
@@ -1370,6 +1370,11 @@ void parseDisplayOp(uint8_t *datagram, Display *display){
 		case DISPLAY_GET_DIGIT_1:
 			dgrammem.ch = display->digit1;
 			formdatagram(datagramG, datagram[1], DISPLAY_SET_DIGIT_1, dgrammem, 'c');
+			uart1putcs(datagramG);
+		break;
+		case DISPLAY_GET_MODE:
+			dgrammem.ch = display->mode;
+			formdatagram(datagramG, datagram[1], DISPLAY_SET_MODE, dgrammem, 'c');
 			uart1putcs(datagramG);
 		break;
 		
