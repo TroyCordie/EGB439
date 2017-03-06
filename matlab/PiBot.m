@@ -120,7 +120,6 @@ classdef PiBot < handle
         % See also PiBot.setDisplayMode.
             data = [PiBot.FN_DISPLAY_VALUE];
             data = [data PiBot.FN_ARG_SEPARATOR num2str(val)]
-            fprintf('send: [%s]\n', data);
              
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
@@ -140,7 +139,6 @@ classdef PiBot < handle
         % See also PiBot.setDisplayValue.
             data = [PiBot.FN_DISPLAY_MODE];
             data = [data PiBot.FN_ARG_SEPARATOR val]
-            fprintf('send: [%s]\n', data);
              
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
