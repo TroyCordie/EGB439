@@ -19,6 +19,8 @@ classdef PiBot < handle
         FN_GET_IMAGE = 'getImageFromCamera'
         FN_MOTOR_SPEEDS = 'setMotorSpeeds'
         FN_MOTOR_TICKS = 'getMotorTicks'
+        FN_DISPLAY_VALUE = 'setDisplayValue'
+        FN_DISPLAY_MODE = 'setDisplayMode'
     end
  
     methods
@@ -105,6 +107,46 @@ classdef PiBot < handle
             ticks = sscanf(s,'%d');
 
         end
+
+        function setDisplayValue(obj, val)
+        %PiBot.setDisplayValue  Write to the robot display
+        %
+        % PB.setDisplayValue(V) writes the value of V to the robot's display, using
+        % the current mode.  The range of allowable values depends on the mode:
+        %  - hexadecimal 0 to 255
+        %  - unsigned decimal 0 to 99
+        %  - signed decimal -9 to 9
+        %
+        % See also PiBot.setDisplayMode.
+            data = [PiBot.FN_DISPLAY_VALUE];
+            data = [data PiBot.FN_ARG_SEPARATOR num2str(val)]
+            fprintf('send: [%s]\n', data);
+             
+            fopen(obj.TCP_MOTORS);
+            fprintf(obj.TCP_MOTORS, data);
+            fclose(obj.TCP_MOTORS);
+        end
+ 
+        function setDisplayMode(obj, val)
+        %PiBot.setDisplayMode  Set the robot display mode
+        %
+        % PB.setDisplayMode(M) sets the numerical mode for the robot's display:
+        %  - 'x' hexadecimal
+        %  - 'u' unsigned decimal
+        %  - 'd' signed decimal -9 to 9
+        %
+        % In decimal modes the decimal point on the right-hand digit is lit.
+        %
+        % See also PiBot.setDisplayValue.
+            data = [PiBot.FN_DISPLAY_MODE];
+            data = [data PiBot.FN_ARG_SEPARATOR val]
+            fprintf('send: [%s]\n', data);
+             
+            fopen(obj.TCP_MOTORS);
+            fprintf(obj.TCP_MOTORS, data);
+            fclose(obj.TCP_MOTORS);
+        end
+ 
     end
      
     methods(Static)

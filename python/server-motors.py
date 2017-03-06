@@ -16,6 +16,8 @@ CHUNK_SIZE = 128
 
 FN_MOTOR_SPEEDS = 'setMotorSpeeds'
 FN_MOTOR_TICKS = 'getMotorTicks'
+FN_DISPLAY_VALUE = 'setDisplayValue'
+FN_DISPLAY_MODE = 'setDisplayMode'
 
 debug = False;
 
@@ -60,6 +62,15 @@ def executeRequestedFunction(requestData, connection):
 
 		# send ticks back over 'connection
 
+	# update the display
+	elif fn == FN_DISPLAY_VALUE:
+		#print('display value = ' + data[1]);
+		display.set_value(int(data[1]));
+
+	elif fn == FN_DISPLAY_MODE:
+		#print('display mode = ' + data[1]);
+		display.set_mode(data[1][0]);
+
 """
 " Main exectution block
 """
@@ -72,6 +83,7 @@ sock.bind(server_address)
 
 mA = ppi.Motor(ppi.AD_MOTOR_A)
 mB = ppi.Motor(ppi.AD_MOTOR_B)
+display = ppi.Display(ppi.AD_DISPLAY_A)
 
 #initialise serial, and retrieve initial values from the Atmega
 ppi.init()

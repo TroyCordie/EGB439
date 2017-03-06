@@ -537,7 +537,7 @@ class Display(object):
         self.value = value
         if self.mode == 2 and value < 0:
             # signed mode for a negative number, form the 2's complement
-            value += 0xff;
+            value = value + 0xff + 1;
         dgram = form_datagram(self.address, DISPLAY_SET_VALUE, value, 'uchar')
         uart.putcs(dgram)
 
@@ -561,7 +561,7 @@ class Display(object):
         else:
             print("ERROR: Incompatible Payload Type Defined. (Python)")
             return 0
-        dgram = form_datagram(self.address, DISPLAY_SET_MODE, mode, 'char')
+        dgram = form_datagram(self.address, DISPLAY_SET_MODE, self.mode, 'char')
         uart.putcs(dgram)
 
 #GETTERS
