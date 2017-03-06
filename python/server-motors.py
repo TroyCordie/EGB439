@@ -4,6 +4,7 @@ import time
 import traceback
 import socket
 import sys
+import os
 
 import penguinPi as ppi
 
@@ -51,7 +52,7 @@ def executeRequestedFunction(requestData, connection):
 		mBticks = mB.get_ticks()
 		#s = str(mAticks) + ' ' + str(mBticks) + ' ' + ':'
 		s = str(mAticks) + ' ' + str(mBticks) + ' ' + '\n'
-		
+
 		if debug:
 			print(s)
 
@@ -97,6 +98,14 @@ client_address = None
 # Start listening for incoming commands
 sock.setblocking(0)
 sock.listen(1)
+
+f = os.popen('ifconfig eth0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
+ip = f.read()
+ip = map(int, ip.split('.'))
+
+display.set_mode('x');
+display.set_value(ip[3]);
+
 while True:
 	# Check if any new commands have been received
 	try: # try catch used because error thrown when there's connection - i.e. no signal transmitted
