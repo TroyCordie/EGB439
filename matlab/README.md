@@ -19,7 +19,7 @@ To access the motor encoders
 ```
 ticks = pb.getMotorTicks();
 ```
-which returns a 2-vector containing the integer tick counts for motor A and motor B.
+which returns a 2-vector containing the integer tick counts for motor A and motor B.  These are in units of degrees of wheel rotation and wrap around at 2^15/2.1333
 
 To set the speed of the motors is simply
 ```
