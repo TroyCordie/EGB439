@@ -25,6 +25,13 @@ classdef PiBot < handle
  
     methods
         function obj = PiBot(address)
+            %PiBot.PiBot Construct a PiBot object
+            %
+            % PB = PiBot(IP) creates an object used for communications with the robot
+            % connected via the IP address which is given as a string in dot format.
+            %
+            % See also PiBot.setMotorSpeeds, PiBot.getMotorTicks,
+            % PiBot.setDisplayValue, PiBot.setDisplayMode.
  
             obj.TCP_MOTORS = tcpip(address, PiBot.PORT_MOTORS, 'NetworkRole', 'client', 'Timeout', PiBot.TIMEOUT);
             obj.TCP_CAMERA = tcpip(address, PiBot.PORT_CAMERAS, 'NetworkRole', 'client', 'Timeout', PiBot.TIMEOUT);
@@ -49,34 +56,72 @@ classdef PiBot < handle
         end
          
         function img = getImageFromCamera(obj)
+            img = [];
+            
             % Attempt to retrieve the image
             try
                 vector = obj.getVectorFromCamera();
             catch error
-                fprintf('Error: retrieving image (''%s'')! Empty image array returned!\n', error.message);
-                img = [];
+                warning('Empty image array returned from RPi');
                 return;
             end
  
             % Convert the image to MATLAB format (if it's the correct size)
-            if length(vector) == PiBot.IMAGE_SIZE
-                img = PiBot.vect2img(vector);
-            else
-                fprintf('Error: Size of data received (%d) did not match expected image size (%d). Empty image array returned!\n', length(vector), PiBot.IMAGE_SIZE);
-                img = [];
-            end
+            assert(length(vector) == PiBot.IMAGE_SIZE, 'Size of data received (%d) did not match expected image size (%d). Empty image array returned!\n', length(vector), PiBot.IMAGE_SIZE);
+            img = reshape([vector(1:3:end); vector(2:3:end); vector(3:3:end)],PiBot.IMAGE_WIDTH, PiBot.IMAGE_HEIGHT, 3);
         end
          
-        function setMotorSpeeds(obj, motorA, motorB)
+        function setMotorSpeeds(obj, varargin)
+            %PiBot.setMotorSpeeds  Set the speeds of the motors
+            %
+            % PB.setMotorSpeeds(SA, SB) sets the speeds of the two motors to the values
+            % SA and SB.
+            %
+            % PB.setMotorSpeeds(SPEED) sets the speeds of the two motors to the values
+            % in the 2-vector SPEED = [SA SB].
+            %
+            % Note::
+            % - This method sets the motor voltage which is somewhat correlated to
+            %   rotational speed.
+            
+            if nargin == 2
+                motors = varargin{1};
+            elseif nargin == 3
+                motors = [varargin{1} varargin{2}];
+            else
+                error('incorrect number of arguments provided');
+            end
+                
+            assert(all(isreal(motors)), 'arguments must be real');
+            assert(all(fix(motors)==motors), 'arguments must have an integer value');
             data = [PiBot.FN_MOTOR_SPEEDS];
-            data = [data PiBot.FN_ARG_SEPARATOR num2str(motorA) PiBot.FN_ARG_SEPARATOR num2str(motorB)]
+            data = [data PiBot.FN_ARG_SEPARATOR num2str(motors(1)) PiBot.FN_ARG_SEPARATOR num2str(motors(2))];
              
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
             fclose(obj.TCP_MOTORS);
         end
+        
+        function stop(obj)
+            %PiBot.stop  Stop all motors
+            %
+            % PB.stop() stops all motors.
+            %
+            % See also PiBot.setMotorSpeed.
+            
+            obj.setMotorSpeeds(0, 0);
+        end
  
         function ticks = getMotorTicks(obj)
+        %PiBot.getMotorTicks   Get motor encoder values
+        %
+        % PB.getMotorTicks() returns a 2-vector containing the current encoder
+        % values of the two robot motors.
+        %
+        % Note::
+        % - The returned values have been rescaled to units of degrees.
+        % - The encoder counter on the robot has a 16-bit signed value.
+
             data = [PiBot.FN_MOTOR_TICKS,PiBot.FN_ARG_SEPARATOR 'A']; % needed for the Pi code
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
@@ -118,8 +163,12 @@ classdef PiBot < handle
         %  - signed decimal -9 to 9
         %
         % See also PiBot.setDisplayMode.
+        
+            assert(isreal(val), 'argument must be real');
+            assert(fix(val)==val, 'argument must have an integer value');
+            
             data = [PiBot.FN_DISPLAY_VALUE];
-            data = [data PiBot.FN_ARG_SEPARATOR num2str(val)]
+            data = [data PiBot.FN_ARG_SEPARATOR num2str(val)];
              
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
@@ -138,32 +187,12 @@ classdef PiBot < handle
         %
         % See also PiBot.setDisplayValue.
             data = [PiBot.FN_DISPLAY_MODE];
-            data = [data PiBot.FN_ARG_SEPARATOR val]
+            data = [data PiBot.FN_ARG_SEPARATOR val];
              
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
             fclose(obj.TCP_MOTORS);
         end
  
-    end
-     
-    methods(Static)
-        function img = vect2img(data)
-%             img = zeros(PiBot.IMAGE_WIDTH, PiBot.IMAGE_HEIGHT, 3);
-%             it = 1;
-             
-            img = reshape([data(1:3:end); data(2:3:end); data(3:3:end)],PiBot.IMAGE_WIDTH, PiBot.IMAGE_HEIGHT, 3);
-%             tic;
-%             for jj = 1:size(img,2) % loop through columns
-%                 for ii = 1:size(img,1) % loop through rows
-%                     for kk = 1:size(img,3)
-%                         img(ii,jj,kk) = data(it); 
-%                         it = it + 1;
-%                     end
-%                 end
-%             end
-%             toc;
-%             disp('time spend in vect2mat function');
-        end        
     end
 end
