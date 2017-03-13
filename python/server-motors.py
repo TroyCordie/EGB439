@@ -4,6 +4,7 @@ import time
 import traceback
 import socket
 import sys
+import threading
 
 import penguinPi as ppi
 
@@ -72,6 +73,18 @@ def executeRequestedFunction(requestData, connection):
 		display.set_mode(data[1][0]);
 
 """
+" Heartbeat thread, pulse the green LED periodically
+"""
+def HeartBeat:
+
+    led = LED(AD_LED_G)
+
+    while True:
+        led.set_state(1);
+        led.set_count(1000);
+        time.sleep(5);
+
+"""
 " Main exectution block
 """
 # Create a TCP/IP socket and bind the socket to the port
@@ -94,6 +107,10 @@ mB.get_all()
 connection = None
 client_address = None
 
+# initialize the heartbeat thread
+heartbeat_thread = threading.Thread(target=HeartBeat, daemon=True)
+heartbeat_thread.start()
+
 # Start listening for incoming commands
 sock.setblocking(0)
 sock.listen(1)
@@ -111,7 +128,11 @@ while True:
 		# Send the data to the function processor
 		executeRequestedFunction(data.rstrip(), connection)
 	except socket.error as msg:
+        print('socket error: ', msg.value);
 		pass
+    except:
+        print('command parser failed: ', data);
+        pass
 	finally:
 		# Clean up the connection if it exists
 		if connection is not None:
