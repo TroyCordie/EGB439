@@ -94,6 +94,8 @@ classdef PiBot < handle
                 
             assert(all(isreal(motors)), 'arguments must be real');
             assert(all(fix(motors)==motors), 'arguments must have an integer value');
+            assert(all(motors>=-100 & motors<=100), 'arguments must be in the range -100 to 100');
+            
             data = [PiBot.FN_MOTOR_SPEEDS];
             data = [data PiBot.FN_ARG_SEPARATOR num2str(motors(1)) PiBot.FN_ARG_SEPARATOR num2str(motors(2))];
              
