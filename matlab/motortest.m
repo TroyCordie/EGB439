@@ -3,7 +3,7 @@ close all; clear all; clc;
 
 %% Connect to the Rasp Pi
 % Get you Pi's IP (type hostname -I into Pi terminal or lookup on DHCP Table from router)
-IP = '192.168.1.141';
+IP = '131.181.33.181';
 pb = PiBot(IP);
 
 %% Set Motor Speeds

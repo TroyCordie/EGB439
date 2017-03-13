@@ -5,6 +5,7 @@ import traceback
 import socket
 import sys
 import threading
+import os
 
 import penguinPi as ppi
 
@@ -52,7 +53,7 @@ def executeRequestedFunction(requestData, connection):
 		mBticks = mB.get_ticks()
 		#s = str(mAticks) + ' ' + str(mBticks) + ' ' + ':'
 		s = str(mAticks) + ' ' + str(mBticks) + ' ' + '\n'
-		
+
 		if debug:
 			print(s)
 
@@ -114,6 +115,20 @@ heartbeat_thread.start()
 # Start listening for incoming commands
 sock.setblocking(0)
 sock.listen(1)
+
+try:
+    f = os.popen('sudo ifconfig wlan0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
+    ip = f.read()
+    ip = bytes(map(int, ip.split('.')))
+    display.set_mode('x')
+    display.set_value(ip[3]);
+except ValueError:
+    display.set_mode('d')
+    display.set_value(-1);
+
+
+
+
 while True:
 	# Check if any new commands have been received
 	try: # try catch used because error thrown when there's connection - i.e. no signal transmitted

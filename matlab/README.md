@@ -19,7 +19,7 @@ To access the motor encoders
 ```
 ticks = pb.getMotorTicks();
 ```
-which returns a 2-vector containing the integer tick counts for motor A and motor B.
+which returns a 2-vector containing the integer tick counts for motor A and motor B.  These are in units of degrees of wheel rotation and wrap around at 2^15/2.1333
 
 To set the speed of the motors is simply
 ```
@@ -30,4 +30,19 @@ where the two arguments are the speed of motor A and B respectively.  WHAT ARE T
 To stop the motors
 ```
 pb.setMotorSpeeds(0,0);
+```
+
+The PenguinPi board has a 2-digit 7-segment display. You can write a hex number (0-255) to that by
+```
+pb.setDisplayValue(32);
+```
+which will display as 20 in hex.  You can change the display base to unsigned decimal by
+```
+pb.setDisplayMode('u');
+```
+and now the display will show 32 in decimal.  The decimal point is lit to indicate decimal mode.
+Unsigned decimal numbers are in the range (0-99).
+There is also a signed decimal display mode for numbers in the range (-9 to +9)
+```
+pb.setDisplayMode('d');
 ```
