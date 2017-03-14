@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 
-# do not run as sudo
+# note do not run as sudo
 import stat
 import os
 import sys
 import time
-import subprocess
 
 disk = '/dev/disk/by-label/PPI-UPDATE'
 mnt = '/media/usb'
-
+dest = '/home/pi/EGB439'
 
 while True:
 	time.sleep(2)
@@ -23,6 +22,5 @@ while True:
 	print('disk present')
 
 	os.system('sudo mount {} {}'.format(disk, mnt) );
-	subprocess.call('cp -r ' + mnt + '/EGB439/. ' + os.path.expanduser('~') + '/EGB439', shell = True)
-	output = subprocess.check_output('cp -r /media/usb/EGB439/. ' + os.path.expanduser('~') + '/EGB439', shell = True)
+	os.system('cp -r {}/EGB439/. {}'.format(mnt,dest))	
 	os.system('sudo shutdown -h now')
