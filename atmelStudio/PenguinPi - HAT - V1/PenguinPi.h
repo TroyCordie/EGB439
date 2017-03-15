@@ -13,7 +13,7 @@
 typedef struct {
 	volatile uint8_t enc1PinState;
 	volatile uint8_t enc2PinState;
-	volatile int16_t position;
+	volatile int16_t position;  // the "encoder" value
 	int8_t encoderMode;//mode 0: single encoder, mode 1: quadrature, mode 2: x4 counting (xor quadrature)
 	
 	int16_t speedDPS;
@@ -32,7 +32,7 @@ typedef struct {
 	int16_t lastVal;
 	int16_t maxError;
 	int32_t maxErrorSum;
-	
+    int8_t  controlMode; // 0=set speed mode, 1=PID control mode
 } Motor;
 
 typedef struct {
@@ -238,6 +238,8 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define MOTOR_SET_GAIN_I 0x05
 #define MOTOR_SET_GAIN_D 0x06
 #define MOTOR_SET_ENC_MODE 0x07
+#define MOTOR_SET_ENC 0x08
+#define MOTOR_SET_CONTROL_MODE 0x09
 
 #define MOTOR_GET_SPEED_DPS 0x81
 #define MOTOR_GET_DEGREES 0x82
@@ -246,6 +248,8 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define MOTOR_GET_GAIN_I 0x85
 #define MOTOR_GET_GAIN_D 0x86
 #define MOTOR_GET_ENC_MODE 0x87
+#define MOTOR_GET_ENC 0x88
+#define MOTOR_GET_CONTROL_MODE 0x89
 
 //SERVO
 #define SERVO_SET_POSITION 0x01

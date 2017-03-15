@@ -53,6 +53,8 @@ MOTOR_SET_GAIN_P = 0x04
 MOTOR_SET_GAIN_I = 0x05
 MOTOR_SET_GAIN_D = 0x06
 MOTOR_SET_ENC_MODE = 0x07
+MOTOR_SET_ENC = 0x08
+MOTOR_SET_CONTROL_MODE = 0x09
 
 MOTOR_GET_SPEED_DPS = 0x81
 MOTOR_GET_DEGREES = 0x82
@@ -61,6 +63,8 @@ MOTOR_GET_GAIN_P = 0x84
 MOTOR_GET_GAIN_I = 0x85
 MOTOR_GET_GAIN_D = 0x86
 MOTOR_GET_ENC_MODE = 0x87
+MOTOR_GET_ENC = 0x88
+MOTOR_GET_CONTROL_MODE = 0x89
 
 #SERVO
 SERVO_SET_POSITION = 0x01
@@ -378,6 +382,10 @@ class Motor(object):
     def get_ticks(self):
         self.degrees = get_variable(self.address, MOTOR_GET_DEGREES, 'int')
         return self.degrees
+
+    def get_encoder(self):
+        enc = get_variable(self.address, MOTOR_GET_ENC, 'int')
+        return enc
 
     def get_direction(self):
         self.dir = get_variable(self.address, MOTOR_GET_DIRECTION, 'char')

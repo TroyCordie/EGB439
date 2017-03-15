@@ -19,8 +19,10 @@ classdef PiBot < handle
         FN_GET_IMAGE = 'getImageFromCamera'
         FN_MOTOR_SPEEDS = 'setMotorSpeeds'
         FN_MOTOR_TICKS = 'getMotorTicks'
+        FN_MOTOR_ENCODERS = 'getMotorEncoders'
         FN_DISPLAY_VALUE = 'setDisplayValue'
         FN_DISPLAY_MODE = 'setDisplayMode'
+        FN_ALL_STOP = 'stopAll'
     end
  
     methods
@@ -114,11 +116,25 @@ classdef PiBot < handle
             obj.setMotorSpeeds(0, 0);
         end
  
+        function reset(obj)
+            %PiBot.reset  Stop all motors and reset encoders
+            %
+            % PB.reset() stop all motors and reset encoders.
+            %
+            % See also PiBot.stop, PiBot.setMotorSpeed.
+            
+            data = [PiBot.FN_ALL_STOP];
+             
+            fopen(obj.TCP_MOTORS);
+            fprintf(obj.TCP_MOTORS, data);
+            fclose(obj.TCP_MOTORS);
+        end
+ 
         function ticks = getMotorTicks(obj)
-        %PiBot.getMotorTicks   Get motor encoder values
+        %PiBot.getMotorTicks   Get motor angles in degrees
         %
-        % PB.getMotorTicks() returns a 2-vector containing the current encoder
-        % values of the two robot motors.
+        % PB.getMotorTicks() returns a 2-vector containing the current shaft angle
+        % of the two robot motors.
         %
         % Note::
         % - The returned values have been rescaled to units of degrees.
@@ -127,32 +143,32 @@ classdef PiBot < handle
             data = [PiBot.FN_MOTOR_TICKS,PiBot.FN_ARG_SEPARATOR 'A']; % needed for the Pi code
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
-%            iter = 0;
-            % We don't know the size of the file so...
-%             c='';
-%             s='';
-%             while ~strcmp(char(c),'\n')
-%                 c = ( fread(obj.TCP_MOTORS,1,'char') );
-%                 s=[s c];
-%                 iter = iter + 1;
-%                 if iter > 30 % the tick array should never be this large, which means unsuccessful read...
-%                     disp('Tick retreval timeout! (PiBot.m ~line 103) returning NULL tick value ...');
-%                     pause(0.1);
-%                     ticks = [];
-%                     fclose(obj.TCP_MOTORS);
-%                     disp('Turning all motors OFF') % this is a precaution, you can comment out this if you want
-%                     setMotorSpeeds(['A','B','C','D'], [0,0,0,0]);
-%                     return;
-%                 end
-%             end
 
             s = fgetl(obj.TCP_MOTORS);
             fclose(obj.TCP_MOTORS);
 
             % Convert ticks to numerical array
-%             ticks = sscanf(s,'%f',inf);
             ticks = sscanf(s,'%d');
+        end
 
+        function ticks = getMotorEncoders(obj)
+        %PiBot.getMotorEncoders   Get motor encoder values
+        %
+        % PB.getMotorTicks() returns a 2-vector containing the current encoder
+        % values of the two robot motors.
+        %
+        % Note::
+        % - The encoder counter on the robot has a 16-bit signed value.
+
+            data = [PiBot.FN_MOTOR_ENCODERS,PiBot.FN_ARG_SEPARATOR 'A']; % needed for the Pi code
+            fopen(obj.TCP_MOTORS);
+            fprintf(obj.TCP_MOTORS, data);
+
+            s = fgetl(obj.TCP_MOTORS);
+            fclose(obj.TCP_MOTORS);
+
+            % Convert ticks to numerical array
+            ticks = sscanf(s,'%d');
         end
 
         function setDisplayValue(obj, val)

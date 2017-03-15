@@ -18,8 +18,10 @@ CHUNK_SIZE = 128
 
 FN_MOTOR_SPEEDS = 'setMotorSpeeds'
 FN_MOTOR_TICKS = 'getMotorTicks'
+FN_MOTOR_ENCODERS = 'getMotorEncoders'
 FN_DISPLAY_VALUE = 'setDisplayValue'
 FN_DISPLAY_MODE = 'setDisplayMode'
+FN_ALL_STOP = 'stopAll'
 
 debug = False;
 
@@ -48,10 +50,9 @@ def executeRequestedFunction(requestData, connection):
 
 	elif fn == FN_MOTOR_TICKS:
 		if debug:
-			print("got here")
+			print("read ticks")
 		mAticks = mA.get_ticks()
 		mBticks = mB.get_ticks()
-		#s = str(mAticks) + ' ' + str(mBticks) + ' ' + ':'
 		s = str(mAticks) + ' ' + str(mBticks) + ' ' + '\n'
 
 		if debug:
@@ -59,10 +60,23 @@ def executeRequestedFunction(requestData, connection):
 
 		b = s.encode('utf-8')
 
+		# send ticks back over 'connection
 		connection.sendall(b)
-		# TODO args -> BrickPi 'getTicks' function
+
+	elif fn == FN_MOTOR_ENCODERS:
+		if debug:
+			print("read encoders")
+		mAenc = mA.get_encoder()
+		mBenc = mB.get_encoder()
+		s = str(mAenc) + ' ' + str(mBenc) + ' ' + '\n'
+
+		if debug:
+			print(s)
+
+		b = s.encode('utf-8')
 
 		# send ticks back over 'connection
+		connection.sendall(b)
 
 	# update the display
 	elif fn == FN_DISPLAY_VALUE:
@@ -72,6 +86,11 @@ def executeRequestedFunction(requestData, connection):
 	elif fn == FN_DISPLAY_MODE:
 		#print('display mode = ' + data[1]);
 		display.set_mode(data[1][0]);
+
+    # all stop
+	elif fn == FN_ALL_STOP:
+		#print('all stop');
+		stop_all();
 
 """
 " Heartbeat thread, pulse the green LED periodically

@@ -6,6 +6,19 @@
  */ 
 
 /*
+ * NOTES
+ * ========
+ *
+ * Motor, set_power() invokes MOTOR_SET_SPEED_DPS which sets motor->dir and motor->setSpeedDPS
+ * set_degrees() invokes MOTOR_SET_DEGREES which sets motor->setDegrees which is the PID setpoint
+ *
+ * LED usage:
+ *  red - valid command packet
+ *  green - encoder ISR
+ *  blue - bad command or framing error
+ */
+
+/*
  * cpu is ATmega 328PB
  */
 #define BAUD 115200
@@ -292,6 +305,11 @@ int16_t main(void){
 
 		motorA.degrees = motorA.position * DEGPERCOUNT;
 		motorB.degrees = motorB.position * DEGPERCOUNT;
+
+
+        /*
+         * this is the non-PID code that needs to be run only if motor->controlMode == 0
+         */
 		//OCR1B = ((motorA.setSpeedDPS-0)*((0xFFFF-0)/(100-0))) + 0;
 		OCR1B = mapRanges(abs(motorA.setSpeedDPS), 0, 100, 0, 0xFFFF);
 
@@ -313,6 +331,9 @@ int16_t main(void){
 			OCR1A = 0;
 		}
 
+        /*
+         * this is the PID code that needs to be reinstated if motor->controlMode == 1
+         */
 		//Motor update		
 		/*if(motorA.pidTimerFlag == 1){
 			motorA.degrees = motorA.position * DEGPERCOUNT;
@@ -1021,7 +1042,12 @@ void parseDatagram(uint8_t *datagram){
 	}
 }
 
-
+/* TODO:
+  change the constant in datagram[0] test to a symbolic value
+   ISINT
+   ISFLOAT
+   ISCHAR  etc
+ */
 void parseMotorOp(uint8_t *datagram, Motor *motor){
 	switch(datagram[2]){
 		//SETTERS
@@ -1040,8 +1066,11 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 		break;
 		case MOTOR_SET_DEGREES:
 			if(datagram[0] == 5){
-				motor->position = 0;
-				motor->degrees = 0;
+                cli();
+                    motor->position = 0;
+                sei();
+                motor->degrees = 0;
+
 				int16_t degrees = (datagram[3]<<8) | datagram[4];
 				motor->setDegrees = degrees;
 				if(degrees > 0) motor->dir = 1;
@@ -1051,6 +1080,13 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 				uart1_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
+		case MOTOR_SET_ENC:
+            // actually does a reset
+            cli();
+                motor->position = 0;
+            sei();
+            motor->degrees = 0;
+        break;
 		case MOTOR_SET_DIRECTION:
 			if(datagram[0] == 4){
 				int8_t direction = datagram[3];
@@ -1102,6 +1138,17 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 				uart1_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
+		case MOTOR_SET_CONTROL_MODE:
+			if(datagram[0] == 4){
+				uint8_t mode = datagram[3];
+				motor->controlMode = mode;
+				//also resets some of the motor struct
+				motor->degrees = 0;
+				motor->dir = 0;
+			}else{
+				uart1_puts_P("ERROR: Incorrect Type\n");
+			}
+		break;
 		
 		//GETTERS
 		case MOTOR_GET_SPEED_DPS:
@@ -1137,6 +1184,18 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 		case MOTOR_GET_ENC_MODE:
 			dgrammem.ch = motor->encoderMode;
 			formdatagram(datagramG, datagram[1], MOTOR_SET_ENC_MODE, dgrammem, 'c');
+			uart1putcs(datagramG);
+		break;
+		case MOTOR_GET_CONTROL_MODE:
+			dgrammem.ch = motor->controlMode;
+			formdatagram(datagramG, datagram[1], MOTOR_SET_CONTROL_MODE, dgrammem, 'c');
+			uart1putcs(datagramG);
+		break;
+		case MOTOR_GET_ENC:
+            cli();
+                dgrammem.in = motor->position;
+            sei();
+			formdatagram(datagramG, datagram[1], MOTOR_SET_ENC_ZERO, dgrammem, 'i');
 			uart1putcs(datagramG);
 		break;
 		
