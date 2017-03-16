@@ -1195,7 +1195,7 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
             cli();
                 dgrammem.in = motor->position;
             sei();
-			formdatagram(datagramG, datagram[1], MOTOR_SET_ENC_ZERO, dgrammem, 'i');
+			formdatagram(datagramG, datagram[1], MOTOR_SET_ENC, dgrammem, 'i');
 			uart1putcs(datagramG);
 		break;
 		
