@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-            camera_t* camera = camera_open("/dev/video0", 640 , 480);
+            camera_t* camera = camera_open("/dev/video1", 640 , 480);
             camera_init(camera);
             camera_start(camera);
 
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
                 zarray_get(detections, i, &det);
 
                 if (!quiet)
-                    printf("%d,%8.3f,%8.3f,%8.3f,%8.3f;", det->id, det->c[0], det->c[0], det->p[0][0], det->p[0][1]);
+                    printf("%d %8.3f %8.3f %8.3f %8.3f;",det->id,det->c[0],det->c[1],det->p[0][0],det->p[0][1]);
 
                 hamm_hist[det->hamming]++;
                 total_hamm_hist[det->hamming]++;
