@@ -11,6 +11,7 @@ import subprocess
 """
 IP_ADDRESS = '0.0.0.0'
 PORT = 43902
+FN_GET_TAGS = 'getTags'
 
 """
 " Helper functions

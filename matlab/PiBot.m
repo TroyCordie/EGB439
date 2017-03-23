@@ -1,30 +1,33 @@
 classdef PiBot < handle
- 
+
     properties(Access = public)
         TCP_MOTORS;
         TCP_CAMERA;
+        TCP_TAGS;
     end
- 
+
     properties (Access = private, Constant)
         TIMEOUT = 10;
- 
+
         PORT_MOTORS = 43900; % some random ports that should be unused as they are above 2000?
         PORT_CAMERAS = 43901;
- 
+        PORT_TAGS = 43902;
+
         IMAGE_WIDTH = 640/2;
         IMAGE_HEIGHT = 480/2;
         IMAGE_SIZE = PiBot.IMAGE_WIDTH * PiBot.IMAGE_HEIGHT * 3;
- 
+
         FN_ARG_SEPARATOR = ','
         FN_GET_IMAGE = 'getImageFromCamera'
         FN_MOTOR_SPEEDS = 'setMotorSpeeds'
         FN_MOTOR_TICKS = 'getMotorTicks'
+        FN_APRIL_TAGS = 'getTags'
         FN_MOTOR_ENCODERS = 'getMotorEncoders'
         FN_DISPLAY_VALUE = 'setDisplayValue'
         FN_DISPLAY_MODE = 'setDisplayMode'
         FN_ALL_STOP = 'stopAll'
     end
- 
+
     methods
         function obj = PiBot(address)
             %PiBot.PiBot Construct a PiBot object
@@ -34,32 +37,33 @@ classdef PiBot < handle
             %
             % See also PiBot.setMotorSpeeds, PiBot.getMotorTicks,
             % PiBot.setDisplayValue, PiBot.setDisplayMode.
- 
+
             obj.TCP_MOTORS = tcpip(address, PiBot.PORT_MOTORS, 'NetworkRole', 'client', 'Timeout', PiBot.TIMEOUT);
             obj.TCP_CAMERA = tcpip(address, PiBot.PORT_CAMERAS, 'NetworkRole', 'client', 'Timeout', PiBot.TIMEOUT);
- 
+            obj.TCP_TAGS = tcpip(address, PiBot.PORT_TAGS, 'NetworkRole', 'client', 'Timeout', PiBot.TIMEOUT);
+
             % Configure the TCPIP objects
             %obj.TCP_CAMERA.Timeout = PiBot.TIMEOUT;
             %obj.TCP_MOTORS.Timeout = PiBot.TIMEOUT;
             obj.TCP_CAMERA.InputBufferSize = PiBot.IMAGE_SIZE;
- 
+
         end
- 
+
         function delete(obj)
             delete(obj.TCP_MOTORS);
             delete(obj.TCP_CAMERA);
         end
- 
+
         function imgVect = getVectorFromCamera(obj)
             fopen(obj.TCP_CAMERA);
-            fprintf(obj.TCP_CAMERA, [PiBot.FN_GET_IMAGE PiBot.FN_ARG_SEPARATOR '100']); 
+            fprintf(obj.TCP_CAMERA, [PiBot.FN_GET_IMAGE PiBot.FN_ARG_SEPARATOR '100']);
             imgVect = fread(obj.TCP_CAMERA, PiBot.IMAGE_SIZE, 'uint8')./255;
             fclose(obj.TCP_CAMERA);
         end
-         
+
         function img = getImageFromCamera(obj)
             img = [];
-            
+
             % Attempt to retrieve the image
             try
                 vector = obj.getVectorFromCamera();
@@ -67,12 +71,12 @@ classdef PiBot < handle
                 warning('Empty image array returned from RPi');
                 return;
             end
- 
+
             % Convert the image to MATLAB format (if it's the correct size)
             assert(length(vector) == PiBot.IMAGE_SIZE, 'Size of data received (%d) did not match expected image size (%d). Empty image array returned!\n', length(vector), PiBot.IMAGE_SIZE);
             img = reshape([vector(1:3:end); vector(2:3:end); vector(3:3:end)],PiBot.IMAGE_WIDTH, PiBot.IMAGE_HEIGHT, 3);
         end
-         
+
         function setMotorSpeeds(obj, varargin)
             %PiBot.setMotorSpeeds  Set the speeds of the motors
             %
@@ -85,7 +89,7 @@ classdef PiBot < handle
             % Note::
             % - This method sets the motor voltage which is somewhat correlated to
             %   rotational speed.
-            
+
             if nargin == 2
                 motors = varargin{1};
             elseif nargin == 3
@@ -93,43 +97,43 @@ classdef PiBot < handle
             else
                 error('incorrect number of arguments provided');
             end
-                
+
             assert(all(isreal(motors)), 'arguments must be real');
             assert(all(fix(motors)==motors), 'arguments must have an integer value');
             assert(all(motors>=-100 & motors<=100), 'arguments must be in the range -100 to 100');
-            
+
             data = [PiBot.FN_MOTOR_SPEEDS];
             data = [data PiBot.FN_ARG_SEPARATOR num2str(motors(1)) PiBot.FN_ARG_SEPARATOR num2str(motors(2))];
-             
+
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
             fclose(obj.TCP_MOTORS);
         end
-        
+
         function stop(obj)
             %PiBot.stop  Stop all motors
             %
             % PB.stop() stops all motors.
             %
             % See also PiBot.setMotorSpeed.
-            
+
             obj.setMotorSpeeds(0, 0);
         end
- 
+
         function reset(obj)
             %PiBot.reset  Stop all motors and reset encoders
             %
             % PB.reset() stop all motors and reset encoders.
             %
             % See also PiBot.stop, PiBot.setMotorSpeed.
-            
+
             data = [PiBot.FN_ALL_STOP];
-             
+
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
             fclose(obj.TCP_MOTORS);
         end
- 
+
         function ticks = getMotorTicks(obj)
         %PiBot.getMotorTicks   Get motor angles in degrees
         %
@@ -146,6 +150,18 @@ classdef PiBot < handle
 
             s = fgetl(obj.TCP_MOTORS);
             fclose(obj.TCP_MOTORS);
+
+            % Convert ticks to numerical array
+            ticks = sscanf(s,'%d');
+        end
+
+        function ticks = getTags(obj)
+            data = [PiBot.FN_APRIL_TAGS,PiBot.FN_ARG_SEPARATOR 'A']; % needed for the Pi code
+            fopen(obj.TCP_TAGS);
+            fprintf(obj.TCP_TAGS, data);
+
+            s = fgetl(obj.TCP_TAGS);
+            fclose(obj.TCP_TAGS);
 
             % Convert ticks to numerical array
             ticks = sscanf(s,'%d');
@@ -181,18 +197,18 @@ classdef PiBot < handle
         %  - signed decimal -9 to 9
         %
         % See also PiBot.setDisplayMode.
-        
+
             assert(isreal(val), 'argument must be real');
             assert(fix(val)==val, 'argument must have an integer value');
-            
+
             data = [PiBot.FN_DISPLAY_VALUE];
             data = [data PiBot.FN_ARG_SEPARATOR num2str(val)];
-             
+
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
             fclose(obj.TCP_MOTORS);
         end
- 
+
         function setDisplayMode(obj, val)
         %PiBot.setDisplayMode  Set the robot display mode
         %
@@ -206,11 +222,11 @@ classdef PiBot < handle
         % See also PiBot.setDisplayValue.
             data = [PiBot.FN_DISPLAY_MODE];
             data = [data PiBot.FN_ARG_SEPARATOR val];
-             
+
             fopen(obj.TCP_MOTORS);
             fprintf(obj.TCP_MOTORS, data);
             fclose(obj.TCP_MOTORS);
         end
- 
+
     end
 end
