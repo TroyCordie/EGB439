@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
     getopt_add_bool(getopt, '2', "refine-pose", 0, "Spend more time trying to precisely localize tags");
 
     if (!getopt_parse(getopt, argc, argv, 1) || getopt_get_bool(getopt, "help")) {
-        printf("Usage: %s [options] <input files>\n", argv[0]);
+        //printf("Usage: %s [options] <input files>\n", argv[0]);
         getopt_do_usage(getopt);
         exit(0);
     }
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
     else if (!strcmp(famname, "tag25h7"))
         tf = tag25h7_create();
     else {
-        printf("Unrecognized tag family name. Use e.g. \"tag36h11\".\n");
+        //printf("Unrecognized tag family name. Use e.g. \"tag36h11\".\n");
         exit(-1);
     }
 
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
         double total_time = 0;
 
         if (maxiters > 1)
-            printf("iter %d / %d\n", iter + 1, maxiters);
+            //printf("iter %d / %d\n", iter + 1, maxiters);
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -225,9 +225,9 @@ int main(int argc, char *argv[])
 
             strcpy(path, "result.jpg");
             if (!quiet)
-                printf("loading %s\n", path);
+               	//printf("loading %s\n", path);
             else
-                printf("%20s ", path);
+                //printf("%20s ", path);
 
             image_u8_t *im = NULL;
 
@@ -263,14 +263,14 @@ int main(int argc, char *argv[])
                 int err = 0;
                 pjpeg_t *pjpeg = pjpeg_create_from_file(path, 0, &err);
                 if (pjpeg == NULL) {
-                    printf("pjpeg error %d\n", err);
+                    //printf("pjpeg error %d\n", err);
                     continue;
                 }
 
                 if (1) {
                     im = pjpeg_to_u8_baseline(pjpeg);
                 } else {
-                    printf("illumination invariant\n");
+                    //printf("illumination invariant\n");
 
                     image_u8x3_t *imc =  pjpeg_to_u8x3_baseline(pjpeg);
 
@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
 
 
             if (im == NULL) {
-                printf("couldn't load %s\n", path);
+                //printf("couldn't load %s\n", path);
                 continue;
             }
 
@@ -315,12 +315,12 @@ int main(int argc, char *argv[])
                 zarray_get(detections, i, &det);
 
                 if (!quiet)
-                    printf("detection %3d: id (%2dx%2d)-%-4d, hamming %d, goodness %8.3f, margin %8.3f, x %8.3f\n",
-                           i, det->family->d*det->family->d, det->family->h, det->id, det->hamming, det->goodness, det->decision_margin, det->c[0]);
+                    printf("(%2dx%2d)-%-4d,%8.3f,%8.3f,%8.3f,%8.3f;", det->id, det->c[0], det->c[0], det->p[0][0], det->p[0][i]);
 
                 hamm_hist[det->hamming]++;
                 total_hamm_hist[det->hamming]++;
             }
+	    printf("\n")
 
             apriltag_detections_destroy(detections);
 
