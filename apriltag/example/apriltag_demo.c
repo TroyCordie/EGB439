@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
         memset(total_hamm_hist, 0, sizeof(total_hamm_hist));
         double total_time = 0;
 
-        if (maxiters > 1)
+        //if (maxiters > 1)
             //printf("iter %d / %d\n", iter + 1, maxiters);
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -224,10 +224,10 @@ int main(int argc, char *argv[])
             //zarray_get(inputs, input, &path);
 
             strcpy(path, "result.jpg");
-            if (!quiet)
+            /*if (!quiet)
                	//printf("loading %s\n", path);
             else
-                //printf("%20s ", path);
+                //printf("%20s ", path);*/
 
             image_u8_t *im = NULL;
 
@@ -262,15 +262,15 @@ int main(int argc, char *argv[])
             else if (str_ends_with(path, "jpg") || str_ends_with(path, "JPG")) {
                 int err = 0;
                 pjpeg_t *pjpeg = pjpeg_create_from_file(path, 0, &err);
-                if (pjpeg == NULL) {
+                /*if (pjpeg == NULL) {
                     //printf("pjpeg error %d\n", err);
                     continue;
-                }
+                }*/
 
                 if (1) {
                     im = pjpeg_to_u8_baseline(pjpeg);
                 } else {
-                    //printf("illumination invariant\n");
+                    //printf("illumination invariant\n");*/
 
                     image_u8x3_t *imc =  pjpeg_to_u8x3_baseline(pjpeg);
 
@@ -303,10 +303,10 @@ int main(int argc, char *argv[])
 
 
 
-            if (im == NULL) {
+            /*if (im == NULL) {
                 //printf("couldn't load %s\n", path);
                 continue;
-            }
+            }*/
 
             zarray_t *detections = apriltag_detector_detect(td, im);
 
@@ -315,39 +315,39 @@ int main(int argc, char *argv[])
                 zarray_get(detections, i, &det);
 
                 if (!quiet)
-                    printf("(%2dx%2d)-%-4d,%8.3f,%8.3f,%8.3f,%8.3f;", det->id, det->c[0], det->c[0], det->p[0][0], det->p[0][i]);
+                    printf("%d,%8.3f,%8.3f,%8.3f,%8.3f;", det->id, det->c[0], det->c[0], det->p[0][0], det->p[0][1]);
 
                 hamm_hist[det->hamming]++;
                 total_hamm_hist[det->hamming]++;
             }
-	    printf("\n")
+	          printf("\n");
 
             apriltag_detections_destroy(detections);
 
-            if (!quiet) {
-                timeprofile_display(td->tp);
-            }
+            //if (!quiet) {
+            //    timeprofile_display(td->tp);
+            //}
 
             total_quads += td->nquads;
 
-            if (!quiet)
+            /*if (!quiet)
                 printf("hamm ");
 
             for (int i = 0; i < hamm_hist_max; i++)
-                printf("%5d ", hamm_hist[i]);
+                printf("%5d ", hamm_hist[i]);*/
 
-            double t =  timeprofile_total_utime(td->tp) / 1.0E3;
-            total_time += t;
-            printf("%12.3f ", t);
+            //double t =  timeprofile_total_utime(td->tp) / 1.0E3;
+            //total_time += t;
+            /*printf("%12.3f ", t);
             printf("%5d", td->nquads);
 
-            printf("\n");
+            printf("\n");*/
 
             image_u8_destroy(im);
         //}
 
 
-        printf("Summary\n");
+        /*printf("Summary\n");
 
         printf("hamm ");
 
@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
             printf("%5d ", total_hamm_hist[i]);
         printf("%12.3f ", total_time);
         printf("%5d", total_quads);
-        printf("\n");
+        printf("\n");*/
 
     }
 
@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
 
 void quit(const char * msg)
 {
-  fprintf(stderr, "[%s] %d: %s\n", msg, errno, strerror(errno));
+  //fprintf(stderr, "[%s] %d: %s\n", msg, errno, strerror(errno));
   exit(EXIT_FAILURE);
 }
 
