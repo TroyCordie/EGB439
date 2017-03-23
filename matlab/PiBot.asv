@@ -164,8 +164,7 @@ classdef PiBot < handle
             fclose(obj.TCP_TAGS);
 
             % Convert ticks to numerical array
-            tags = strsplit(s,';');
-            %tags = sscanf(s,'%f');
+            tags = sscanf(s,'%f');
         end
 
         function ticks = getMotorEncoders(obj)
