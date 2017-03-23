@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-            camera_t* camera = camera_open("/dev/video1", 640 , 480);
+            camera_t* camera = camera_open("/dev/video0", 640 , 480);
             camera_init(camera);
             camera_start(camera);
 

@@ -1,4 +1,4 @@
-#!usr/bin/python
+#!usr/bin/python3
 
 import time
 import socket
@@ -12,6 +12,9 @@ import subprocess
 IP_ADDRESS = '0.0.0.0'
 PORT = 43902
 FN_GET_TAGS = 'getTags'
+CHUNK_SIZE = 128
+#debug = False;
+debug = True;
 
 """
 " Helper functions
@@ -26,23 +29,30 @@ def executeRequestedFunction(requestData, connection):
 
     # Decide what function should be run, and attempt to run it with the arguments
     if fn == FN_GET_TAGS:
-    if debug:
-        print('getImageFromCamera() called received!', file=sys.stderr)
-
-    p = subprocess.Popen("./../apriltag/example/apriltag_demo", stdout=subprocess.PIPE)
-
-    for line in iter(p.stdout.readline,""):
         if debug:
-        	print(line)
-        b = line.encode('utf-8')
-        connection.sendall(b)
+            print('getImageFromCamera() called received!', file=sys.stderr)
 
-        #for debugging
-        #for tag in line.split(';'):
-        #    if tag == "\n":
-        #        break
-        #    tags = [float(z.strip()) for z in tag.split(',')]
-        #    print tags[3]-tags[1], tags[4]-tags[2]
+        p = subprocess.Popen("./../apriltag/example/apriltag_demo", stdout=subprocess.PIPE)
+
+
+        for line in iter(p.stdout.readline, "\n"):
+            print(line)
+            if line.decode('utf-8') == "\n": 
+                noData = "-1 -1 \n"
+                b = noData.encode('utf-8')
+                connection.sendall(b)
+                break
+            else:
+                connection.sendall(line)
+                break
+
+#            print(line)
+#            print(line.split(';'))
+#            for tag in line.split(';'):
+#                if tag == "\n":
+#                    break
+#                tags = [float(z.strip()) for z in tag.split(' ')]
+#                print(tags[3]-tags[1], tags[4]-tags[2])
 
 """
 " Main execution block
@@ -54,11 +64,7 @@ print('Starting up on {0}, port {1}' .format(server_address[0], server_address[1
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind(server_address)
 
-# Get the camera up and running
 stream = io.BytesIO()
-camera = picamera.PiCamera()
-camera.resolution = (IM_WIDTH, IM_HEIGHT)
-#camera.start_preview()
 time.sleep(2)
 
 # Initialise loop variables
