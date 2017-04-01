@@ -13,8 +13,8 @@ IP_ADDRESS = '0.0.0.0'
 PORT = 43902
 FN_GET_TAGS = 'getTags'
 CHUNK_SIZE = 128
-#debug = False;
-debug = True;
+debug = False;
+#debug = True;
 
 """
 " Helper functions
@@ -23,7 +23,7 @@ def executeRequestedFunction(requestData, connection):
     # Splice and dice
     data = requestData.decode("utf-8").split(',')
     if debug:
-        print(data[1])
+        print("from MatLab: " + data[0])
     fn = data[0]
     args = data[1:]
 
@@ -34,9 +34,8 @@ def executeRequestedFunction(requestData, connection):
 
         p = subprocess.Popen("./../apriltag/example/apriltag_demo", stdout=subprocess.PIPE)
 
-
         for line in iter(p.stdout.readline, "\n"):
-            print(line)
+            #print(line)
             if line.decode('utf-8') == "\n": 
                 noData = "-1 -1 \n"
                 b = noData.encode('utf-8')
