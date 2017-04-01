@@ -156,6 +156,7 @@ classdef PiBot < handle
         end
 
         function tags = getTags(obj)
+            elements = 5;  %elements per tag
             data = [PiBot.FN_APRIL_TAGS,PiBot.FN_ARG_SEPARATOR 'A']; % needed for the Pi code
             fopen(obj.TCP_TAGS);
             fprintf(obj.TCP_TAGS, data);
@@ -164,8 +165,18 @@ classdef PiBot < handle
             fclose(obj.TCP_TAGS);
 
             % Convert ticks to numerical array
-            tags = strsplit(s,';');
-            %tags = sscanf(s,'%f');
+            tempTags = strsplit(s,{';', ' '});
+            tempTags(end) = [];
+            
+            numTags = size(tempTags,2)/elements;
+
+            tags = zeros(numTags,elements);
+
+            for i = 1:numTags
+                for ii = 1:elements
+                   tags(i,ii) = cell2mat(tempTags(((i-1)*5)+ii));
+                end
+            end
         end
 
         function ticks = getMotorEncoders(obj)
