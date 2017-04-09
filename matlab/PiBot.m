@@ -23,6 +23,7 @@ classdef PiBot < handle
         FN_DISPLAY_VALUE = 'setDisplayValue'
         FN_DISPLAY_MODE = 'setDisplayMode'
         FN_ALL_STOP = 'stopAll'
+        FN_MOTOR_MOVE = 'setMotorMove'
     end
  
     methods
@@ -85,6 +86,9 @@ classdef PiBot < handle
             % Note::
             % - This method sets the motor voltage which is somewhat correlated to
             %   rotational speed.
+            %
+            % See also setMotorSpeed.
+
             
             if nargin == 2
                 motors = varargin{1};
@@ -99,6 +103,36 @@ classdef PiBot < handle
             assert(all(motors>=-100 & motors<=100), 'arguments must be in the range -100 to 100');
             
             data = [PiBot.FN_MOTOR_SPEEDS];
+            data = [data PiBot.FN_ARG_SEPARATOR num2str(motors(1)) PiBot.FN_ARG_SEPARATOR num2str(motors(2))];
+             
+            fopen(obj.TCP_MOTORS);
+            fprintf(obj.TCP_MOTORS, data);
+            fclose(obj.TCP_MOTORS);
+        end
+        
+        function setMotorMove(obj, varargin)
+            %PiBot.setMotorMove  Set the movement of the motors
+            %
+            % PB.setMotorSpeeds(MA, MB) sets the angular change of the two motors to the values
+            % MA and MB.
+            %
+            % PB.setMotorSpeeds(MOVE) sets the speeds of the two motors to the values
+            % in the 2-vector MOVE = [MA MB].
+            %
+            % See also setMotorSpeed.
+            
+            if nargin == 2
+                motors = varargin{1};
+            elseif nargin == 3
+                motors = [varargin{1} varargin{2}];
+            else
+                error('incorrect number of arguments provided');
+            end
+                
+            assert(all(isreal(motors)), 'arguments must be real');
+            assert(all(fix(motors)==motors), 'arguments must have an integer value');
+            
+            data = [PiBot.FN_MOTOR_MOVE];
             data = [data PiBot.FN_ARG_SEPARATOR num2str(motors(1)) PiBot.FN_ARG_SEPARATOR num2str(motors(2))];
              
             fopen(obj.TCP_MOTORS);
