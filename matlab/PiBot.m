@@ -230,7 +230,7 @@ classdef PiBot < handle
         end
 
         function tags = getTags(obj)
-            elements = 5;  %elements per tag
+            elements = 5;  %elements per tag.
             data = [PiBot.FN_APRIL_TAGS,PiBot.FN_ARG_SEPARATOR 'A']; % needed for the Pi code
             fopen(obj.TCP_TAGS);
             fprintf(obj.TCP_TAGS, data);
