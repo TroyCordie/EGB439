@@ -82,9 +82,13 @@ sock.bind(server_address)
 
 # Get the camera up and running
 stream = io.BytesIO()
+
+# see http://picamera.readthedocs.io/en/release-1.10/api_camera.html for details
+
 camera = picamera.PiCamera()
 camera.resolution = (IM_WIDTH, IM_HEIGHT)
 #camera.start_preview()
+
 if args.awb:
 	camera.awb_mode = args.awb
 if args.gain:
