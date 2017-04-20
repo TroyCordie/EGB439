@@ -4,7 +4,7 @@ close all; clear all; clc;
 % Get you Pi's IP (type hostname -I into Pi terminal)
 % IP = '172.19.226.67';
 % IP = 'AlisterCameronPi';
-IP = '192.168.1.142';
+IP = '172.19.232.154';
 pb = PiBot(IP);
 
 %% Get Image from Camera

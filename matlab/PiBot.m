@@ -229,26 +229,41 @@ classdef PiBot < handle
             ticks = sscanf(s,'%d');
         end
 
-        function tags = getTags(obj)
+        function tags = getTags(obj) 
+        % PiBot.getTags   Returns details of all visable April Tags
+        %
+        % PB.getTags() returns a n*5 array. n equals the number of visable
+        % tags and each row contains 
+        % [Tag Number, center x, center y, top left x ,top left y]
+        % 
+        %
+        % Note::
+        % - The returned values are in pixels a homogeneous transformation
+        % will be required to obtain meters
+
             elements = 5;  %elements per tag.
             data = [PiBot.FN_APRIL_TAGS,PiBot.FN_ARG_SEPARATOR 'A']; % needed for the Pi code
             fopen(obj.TCP_TAGS);
+            pause(1)
             fprintf(obj.TCP_TAGS, data);
-
             s = fgetl(obj.TCP_TAGS);
             fclose(obj.TCP_TAGS);
 
-            % Convert ticks to numerical array
+            % Convert tags to an array
             tempTags = strsplit(s,{';', ' '});
+            %remove the null char
             tempTags(end) = [];
-            
+
             numTags = size(tempTags,2)/elements;
 
+            %make an empty array for the tags
             tags = zeros(numTags,elements);
-
+            
+            %sort tag data in to rows
+            % [tag number, center X, center Y, top left X, top left, y]
             for i = 1:numTags
                 for ii = 1:elements
-                   tags(i,ii) = cell2mat(tempTags(((i-1)*5)+ii));
+                    tags(i,ii) = str2double(cell2mat(tempTags(((i-1)*5)+ii)));
                 end
             end
         end
