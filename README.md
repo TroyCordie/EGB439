@@ -47,12 +47,12 @@ iface wlan0 inet dhcp
     wpa-psk "egb439123"
 ```
 
-###ENB439-3_Linksys_Config
+###ENB439-3 QUT Network with internet access
 ```
 allow-hotplug wlan0 
 auto wlan0
 iface wlan0 inet dhcp
-    wpa-ssid "EGB439-2"
+    wpa-ssid "EGB439-3"
     wpa-psk "egb439123"
 ```
 
