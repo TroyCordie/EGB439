@@ -1,9 +1,6 @@
 /*
  * main.c
  *
- */ 
-
-/*
  * NOTES
  * ========
  *
@@ -17,10 +14,12 @@
  */
 
 /*
- * cpu is ATmega 644PA
+ * cpu is ATmega644PA
  */
-#define BAUD 115200
-#define F_CPU 20000000UL
+#define DEBUG 1
+ 
+#define BAUD  115200
+#define F_CPU 8000000UL
 
 #include <stdlib.h>
 #include <avr/io.h>
@@ -35,44 +34,25 @@
 #include "PCA6416A.h"
 
 
-//TEST_LED	int main(void)
-//TEST_LED	{
-//TEST_LED		DDRC = 0x0C; 	//Output on C3:2
-//TEST_LED		DDRD = 0xE0; 	//Output on D7:5	--RGB
-//TEST_LED		
-//TEST_LED		PORTD= 0xE0;
-//TEST_LED		
-//TEST_LED		
-//TEST_LED		while(1) 		//infinite loop
-//TEST_LED		{	
-//TEST_LED			PORTC= 0x0C;
-//TEST_LED			_delay_ms(500);
-//TEST_LED			
-//TEST_LED			PORTC= 0x00;
-//TEST_LED			_delay_ms(500);		
-//TEST_LED		}
-//TEST_LED	}
 
-
-
-Motor motorA;
-Motor motorB;
-Servo servoA;
-Servo servoB;
-LED ledR;
-LED ledG;
-LED ledB;
-Display displayA;
-Button buttonA;
-Button buttonB;
-Button buttonC;
-AnalogIn vdiv;
-AnalogIn csense;
+Motor 		motorA;
+Motor 		motorB;
+//Servo 		servoA;			//DO WE NEED THESE
+//Servo 		servoB;			//DO WE NEED THESE
+LED 		ledR;
+LED 		ledG;
+LED 		ledB;
+Display 	displayA;
+Button 		buttonA;
+Button 		buttonB;
+Button 		buttonC;
+AnalogIn 	vdiv;
+AnalogIn 	csense;
 
 //Global variables
-char fstring[32];
+char 	fstring[32];
 uint8_t datagramG[DGRAM_MAX_LENGTH+1];
-int8_t mAQuadTable[4][4] = {{ 0, +1, -1,  2},
+int8_t 	mAQuadTable[4][4] = {{ 0, +1, -1,  2},
 							{-1,  0,  2, +1},
 							{+1,  2,  0, -1},
 							{ 2, -1, +1,  0}};
@@ -90,6 +70,38 @@ struct Battery {
 	uint16_t count;
 	uint16_t limit;//number of cycles until it triggers a shutdown
 } battery;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //V2.0	ISR(PCINT1_vect){
 //V2.0		//Motor A encoders
@@ -235,334 +247,56 @@ struct Battery {
 //V2.0			buttonLogic(&buttonC, btnCval);
 //V2.0		}
 //V2.0	}
-//V2.0	
-//V2.0	ISR(TIMER2_OVF_vect){//period of 21.3333us. use a counter for longer delays
-//V2.0		static uint8_t motorControlCount = 0;
-//V2.0		
-//V2.0		if(motorControlCount < CONTROL_COUNT){//should achieve a period of 64 us
-//V2.0			motorControlCount++;
-//V2.0		}else{
-//V2.0			//set PID flags
-//V2.0			motorA.pidTimerFlag = 1;
-//V2.0			motorB.pidTimerFlag = 1;
-//V2.0			motorControlCount = 0;
-//V2.0		}
-//V2.0		
-//V2.0		if(ledR.count > 0) ledR.count--;
-//V2.0		else ledR.state = 0;
-//V2.0		if(ledG.count > 0) ledG.count--;
-//V2.0		else ledG.state = 0;
-//V2.0		if(ledB.count > 0) ledB.count--;
-//V2.0		else ledB.state = 0;
-//V2.0		
-//V2.0		if(buttonA.debounceCount > 0) buttonA.debounceCount--;
-//V2.0		if(buttonB.debounceCount > 0) buttonB.debounceCount--;
-//V2.0		if(buttonC.debounceCount > 0) buttonC.debounceCount--;
-//V2.0	}
-//V2.0	
-//V2.0	ISR(ADC_vect){//period of 69.3333us for a standard ADC read, 2x longer for first
-//V2.0		if(vdiv.count > 1){
-//V2.0			vdiv.count--;//really this is just a counter to get a few readings before actually using the ADC value
-//V2.0			ADCSRA |= (1<<ADSC);
-//V2.0		}else if(vdiv.count == 1){
-//V2.0			vdiv.ready = 1;
-//V2.0			vdiv.count = 0;
-//V2.0		}
-//V2.0		if(csense.count > 1){
-//V2.0			csense.count--;
-//V2.0			ADCSRA |= (1<<ADSC);
-//V2.0		}else if(csense.count == 1){
-//V2.0			csense.ready = 1;
-//V2.0			csense.count = 0;
-//V2.0		}
-//V2.0	}
-//V2.0	
 
-void buttonLogic(Button *button, uint8_t btnVal){
-	if(button->debounceCount == 0){
-		button->pinState = btnVal;
-		if(btnVal == 0){//button is held down, falling edge
-			button->state ^= 1;
-		}else if(btnVal == 1 && button->pinMode == 1){//rising edge
-			button->state ^= 1;
-		}
-		button->debounceCount = 500;    // stop further transitions being processed for 500 ticks
+ISR(TIMER2_OVF_vect){							//period of 21.3333us. use a counter for longer delays
+	static uint8_t motorControlCount = 0;
+	
+	if(motorControlCount < CONTROL_COUNT) {		//should achieve a period of 64 us
+		motorControlCount++;
+	}
+	else {
+		//set PID flags
+		motorA.pidTimerFlag = 1;
+		motorB.pidTimerFlag = 1;
+		motorControlCount   = 0;
+	}
+	
+	if(ledR.count > 0) 	ledR.count--;
+	else 				ledR.state = 0;
+	
+	if(ledG.count > 0) 	ledG.count--;
+	else 				ledG.state = 0;
+	
+	if(ledB.count > 0) 	ledB.count--;
+	else 				ledB.state = 0;
+	
+//DELETE	if(buttonA.debounceCount > 0) buttonA.debounceCount--;
+//DELETE	if(buttonB.debounceCount > 0) buttonB.debounceCount--;
+//DELETE	if(buttonC.debounceCount > 0) buttonC.debounceCount--;
+}
+
+ISR(ADC_vect) {								//period of 69.3333us for a standard ADC read, 2x longer for first
+	if(vdiv.count > 1){
+		vdiv.count--;						//really this is just a counter to get a few readings before actually using the ADC value
+		ADCSRA |= (1<<ADSC);
+	}
+	else if(vdiv.count == 1){
+		vdiv.ready = 1;
+		vdiv.count = 0;
+	}
+	if(csense.count > 1){
+		csense.count--;
+		ADCSRA |= (1<<ADSC);
+	}
+	else if(csense.count == 1){
+		csense.ready = 1;
+		csense.count = 0;
 	}
 }
 
-int16_t main(void){
-
-//V2.0 LED TEST
-	DDRC = 0x0C; 	//Output on C3:2
-	DDRD = 0xE0; 	//Output on D7:5	--RGB
-
-	for(uint8_t j = 0; j < 3; j++) {
-		PORTC= 0x00;
-		PORTD= 0xC0;
-		_delay_ms(500);		
-		
-		PORTC= 0x0C;
-		PORTD= 0xE0;
-		_delay_ms(500);		
-	}	
-//V2.0 LEDs all OFF so can be used for debug later on	
-	
-	init_structs();
-	init();
-//V2.0	init_display();
-//V2.0	detect_reset();
-//V2.0	ledB.state = 1;
-//V2.0	ledB.count = 10000;
-//V2.0	ledR.state = 1;
-//V2.0	ledR.count = 10000;
-	
-	uart_puts_P("PenguinPi v2.0\n");
-	
-	
-	_delay_ms(1000);	
-	PORTC= 0x04;
-	
-	
-	uint8_t com;
-
-	vdiv.count = ADC_COUNT;
-	ADCSRA |= (1<<ADSC);//start the first ADC conversion
-	
-    while (1) 
-    {
-		com = checkBuffer();					
-		if(com == STARTBYTE){
-			parseDatagram(datagramG);
-		}
-		//cleanup buffers
-		com = 0;
-		for(uint8_t j = 0; j < DGRAM_MAX_LENGTH; j++) datagramG[j] = 0;
-		dgrammem.fl = 0;
-
-//sprintf(fstring, "encA: %6d\n", motorA.position);
-//uart1_puts(fstring);
-//sprintf(fstring, "encB: %6d\n", motorB.position);
-//uart1_puts(fstring);
-
-		motorA.degrees = motorA.position * DEGPERCOUNT;
-		motorB.degrees = motorB.position * DEGPERCOUNT;
 
 
-        /*
-         * this is the non-PID code that needs to be run only if motor->controlMode == 0
-         */
-		//OCR1B = ((motorA.setSpeedDPS-0)*((0xFFFF-0)/(100-0))) + 0;
-		OCR1B = mapRanges(abs(motorA.setSpeedDPS), 0, 100, 0, 0xFFFF);
 
-		if(motorA.dir == 1){
-			PORTC |= (1<<MOTOR_A_PHA);
-			}else if(motorA.dir == -1){
-			PORTC &= ~(1<<MOTOR_A_PHA);
-			}else{
-			OCR1B = 0;
-		}
-
-		OCR1A = mapRanges(abs(motorB.setSpeedDPS), 0, 100, 0, 0xFFFF);
-
-		if(motorB.dir == 1){
-			PORTC &= ~(1<<MOTOR_B_PHA);
-			}else if(motorB.dir == -1){
-			PORTC |= (1<<MOTOR_B_PHA);
-			}else{
-			OCR1A = 0;
-		}
-
-        /*
-         * this is the PID code that needs to be reinstated if motor->controlMode == 1
-         */
-		//Motor update		
-		/*if(motorA.pidTimerFlag == 1){
-			motorA.degrees = motorA.position * DEGPERCOUNT;
-			int16_t result = motorPIDControl(motorA.setDegrees, &motorA);
-			
-			OCR1B = (mapRanges(abs(result), 0, 0xFFFF, MOTOR_PWM_RANGE_MIN, 0xFFFF));
-			if(result > 0){
-				motorA.dir = 1;
-				//PORTC &= ~(1<<MOTOR_A_PHA);//reversed
-				PORTC |= (1<<MOTOR_A_PHA);
-			}else if(result < 0){
-				motorA.dir = -1;
-				//PORTC |= (1<<MOTOR_A_PHA);//reversed
-				PORTC &= ~(1<<MOTOR_A_PHA);
-			}else{
-				motorA.dir = 0;
-				OCR1B = 0;
-			}
-			motorA.pidTimerFlag = 0;
-		}
-		if(motorB.pidTimerFlag == 1){
-			motorB.degrees = motorB.position * DEGPERCOUNT;
-			int16_t result = motorPIDControl(motorB.setDegrees, &motorB);
-			
-			OCR1A = (mapRanges(abs(result), 0, 0xFFFF, MOTOR_PWM_RANGE_MIN, 0xFFFF));
-			if(result > 0){
-				motorB.dir = 1;
-				//PORTC |= (1<<MOTOR_B_PHA);//reversed
-				PORTC &= ~(1<<MOTOR_B_PHA);
-			}else if(result < 0){
-				motorB.dir = -1;
-				//PORTC &= ~(1<<MOTOR_B_PHA);//reversed
-				PORTC |= (1<<MOTOR_B_PHA);
-			}else{
-				motorB.dir = 0;
-				OCR1A = 0;
-			}
-			motorB.pidTimerFlag = 0;
-		}*/
-		
-		//Servo update
-		if(servoA.state){
-			if(servoA.setPos < servoA.minRange) servoA.setPos = servoA.minRange;//clip the position to within bounds
-			if(servoA.setPos > servoA.maxRange) servoA.setPos = servoA.maxRange;
-//V2.0			OCR3A = MAP(servoA.setPos, servoA.minRange, servoA.maxRange, servoA.minPWM, servoA.maxPWM);//bad stuff happens when data types are to small
-			//debug
-			//sprintf(fstring, "ServoA: %ld deg\n", servoA.setPos);
-			//uart1_puts(fstring);
-			//sprintf(fstring, "Mapped: %ld tic\n", MAP(servoA.setPos, servoA.minRange, servoA.maxRange, servoA.minPWM, servoA.maxPWM));
-			//uart1_puts(fstring);
-			//displayA.value = servoA.setPos/10;
-		}else{
-			PORTD &= ~(1<<SERVO_A);
-		}
-		if(servoB.state){
-			if(servoB.setPos < servoB.minRange) servoB.setPos = servoB.minRange;
-			if(servoB.setPos > servoB.maxRange) servoB.setPos = servoB.maxRange;
-//V2.0			OCR4A = MAP(servoB.setPos, servoB.minRange, servoB.maxRange, servoB.minPWM, servoB.maxPWM);
-		}else{
-			PORTD &= ~(1<<SERVO_B);
-		}
-				
-
-		//Display update
-		if(displayA.draw){
-			update_dd7s(&displayA);
-			displayA.draw = 0;
-		}
-		
-						
-		//LED update
-		if(ledR.state > 0){
-			if(ledR.brightness > 0) redLEDPercent(ledR.brightness);
-			else LEDOn(LED_R);
-		} else LEDOff(LED_R);
-
-		if(ledG.state > 0){
-			if(ledG.brightness > 0) greenLEDPercent(ledG.brightness);
-			else LEDOn(LED_G);
-		} else LEDOff(LED_G);
-
-		if(ledB.state > 0){ 
-			if(ledB.brightness > 0) blueLEDPercent(ledB.brightness);
-			else LEDOn(LED_B);
-		} else LEDOff(LED_B);
-		
-
-		//Button update
-		if(buttonA.state == 1){
-			ledR.state = 1;
-			ledR.count = 2000;
-// 			displayA.value--;
-// 			displayA.draw = 1;
-			
-			uart1_puts_P("This is a shutdown request");
-
-			motorA.position = 0;
-			motorA.setDegrees = 180;
-			motorA.dir = -1;
-			motorB.position = 0;
-			motorB.setDegrees = 180;
-			motorB.dir = 1;
-			if(buttonA.programMode == 0) buttonA.state = 0;
-		}else{
-			
-		}
-		if(buttonB.state == 1){
-			ledG.state = 1;
-			ledG.count = 2000;
-// 			displayA.value = 0;
-// 			displayA.draw = 1;
-
-			motorA.position = 0;
-			motorA.setSpeedDPS = motorA.setSpeedDPS +10;
-			motorA.dir = -1;
-			motorB.position = 0;
-			motorB.setDegrees = -180;
-			motorB.dir = -1;
-			if(buttonB.programMode == 0) buttonB.state = 0;
-		}else{
-			
-		}
-		if(buttonC.state == 1){
-			ledB.state = 1;
-			ledB.count = 2000;
-// 			displayA.value++;
-// 			displayA.draw = 1;
-
-			motorA.position = 0;
-			motorA.setSpeedDPS = motorA.setSpeedDPS -10;
-			motorA.dir = 1;
-			motorB.position = 0;
-			motorB.setDegrees = -180;
-			motorB.dir = -1;
-			if(buttonC.programMode == 0) buttonC.state = 0;
-		}else{
-			
-		}
-
-		//Analog update
-		if(vdiv.ready && !(ADCSRA&(1<<ADSC))){
-			vdiv.raw = ADC;
-			vdiv.value = vdiv.raw * vdiv.scale/1000;
-			vdiv.ready = 0;
-
-			//change multiplexer to csense
-			ADMUX |= (1<<MUX0);//change mux
-			csense.count = ADC_COUNT;
-			ADCSRA |= (1<<ADSC);//restart
-
-			//sprintf(fstring, "Voltage: %5.3f V\n", vdiv.value);
-			//uart1_puts(fstring);
-		}
-		if(csense.ready && !(ADCSRA&(1<<ADSC))){
-			csense.raw = ADC;
-			csense.value = csense.raw * csense.scale;
-			csense.ready = 0;
-
-			//change multiplexer to csense
-			ADMUX &= ~(1<<MUX0);//change mux
-			vdiv.count = ADC_COUNT;
-			ADCSRA |= (1<<ADSC);//restart
-
-			//sprintf(fstring, "Current: %5.3f mA\n", csense.value);
-			//uart1_puts(fstring);
-		}
-
-		if(vdiv.value < battery.cutoff){
-			if(battery.count < battery.limit) battery.count++;
-			else{
-				//lockout most functions
-				PRR0 |= (1<<PRTIM2)|(1<<PRTIM0)|(1<<PRTIM1);//|(1<<PRADC);
-				//display low battery warning
-				uint8_t reg[2] = {0, 0};
-				reg[0] = DIGIT0_B;
-				reg[1] = DIGIT1_F;
-				i2cWritenBytes(reg, displayA.address, OUTPUT_0, 2);
-								
-				while(1){
-					//send shutdown command
-					uart1_puts_P("Low battery shutdown request");
-					PORTB &= ~(1<<PB5);//pull the pin low
-					//loop until the battery really is flat...
-				}			
-			}
-		}else battery.count = 0;
-    }
-}
 
 void init_structs(void){
 	float kP = 70.0;
@@ -583,17 +317,17 @@ void init_structs(void){
 	motorB.maxErrorSum = (INT32_MAX / 2) / (motorB.gainI + 1);
 	motorB.encoderMode = 1;
 
-	servoA.setPos = 90;
-	servoA.minRange = 0;
-	servoA.maxRange= 180;
-	servoA.minPWM = SERVO_PWM_RANGE_MIN;
-	servoA.maxPWM = SERVO_PWM_RANGE_MAX;
+//DELETE	servoA.setPos = 90;
+//DELETE	servoA.minRange = 0;
+//DELETE	servoA.maxRange= 180;
+//DELETE	servoA.minPWM = SERVO_PWM_RANGE_MIN;
+//DELETE	servoA.maxPWM = SERVO_PWM_RANGE_MAX;
 
-	servoB.setPos= 90;
-	servoB.minRange = 0;
-	servoB.maxRange= 180;
-	servoB.minPWM = SERVO_PWM_RANGE_MIN;
-	servoB.maxPWM = SERVO_PWM_RANGE_MAX;
+//DELETE	servoB.setPos= 90;
+//DELETE	servoB.minRange = 0;
+//DELETE	servoB.maxRange= 180;
+//DELETE	servoB.minPWM = SERVO_PWM_RANGE_MIN;
+//DELETE	servoB.maxPWM = SERVO_PWM_RANGE_MAX;
 
 	displayA.address = PCA6416A_0;
 	displayA.value= 0;
@@ -621,44 +355,53 @@ void init_structs(void){
 void init(void){
 //V2.0		//Power reduction register
 //V2.0		PRR0 &= ~((1<<PRTWI0)|(1<<PRTIM2)|(1<<PRTIM0)|(1<<PRUSART1)|(1<<PRTIM1)|(1<<PRADC));
-//V2.0	
-//V2.0		//Motor Pins
-//V2.0		DDRB |= (1<<MOTOR_A_PWM)|(1<<MOTOR_B_PWM);
-//V2.0		DDRC |= (1<<MOTOR_A_PHA)|(1<<MOTOR_B_PHA);
-//V2.0	
-//V2.0		//Motor PWM
-//V2.0		TCCR1A |= (1<<COM1A1)|(0<<COM1A0)|(1<<COM1B1)|(0<<COM1B0)|(1<<WGM11)|(0<<WGM10); // Non-inverting, 16 bit fast PWM
-//V2.0		TCCR1B |= (1<<WGM13)|(1<<WGM12)|(0<<CS12)|(0<<CS11)|(1<<CS10); // DIV1 prescaler
-//V2.0		ICR1 = 0xFFFF; //set TOP
-//V2.0	
-//V2.0		//Encoders
-//V2.0		DDRC &= ~((1<<MOTOR_A_ENC_1)|(1<<MOTOR_A_ENC_2));
-//V2.0		PORTC |= (1<<MOTOR_A_ENC_1)|(1<<MOTOR_A_ENC_2); //enable internal pull ups
-//V2.0		PCMSK1 = (1<<PCINT10)|(1<<PCINT11);
-//V2.0		PCICR |= (1<<PCIE1);
-//V2.0	
-//V2.0		DDRE &= ~((1<<MOTOR_B_ENC_1)|(1<<MOTOR_B_ENC_2));
-//V2.0		PORTE |= (1<<MOTOR_B_ENC_1)|(1<<MOTOR_B_ENC_2);
-//V2.0		PCMSK3 = (1<<PCINT24)|(1<<PCINT25);
-//V2.0		PCICR |= (1<<PCIE3);
-//V2.0		
-//V2.0		//Servo
-//V2.0		DDRD |= (1<<SERVO_A)|(1<<SERVO_B);
-//V2.0		TCCR3A |= (1<<COM3A1)|(0<<COM3A0)|(1<<WGM31)|(0<<WGM30); // non-inverting, 15 bit resolution fast PWM
-//V2.0		TCCR3B |= (1<<WGM33)|(1<<WGM32)|(0<<CS32)|(1<<CS31)|(0<<CS30); // DIV8 prescaler, TOP 20,000 to run at 50 Hz for 20ms pulse
-//V2.0		ICR3 = 0x7530;
-//V2.0		
-//V2.0		TCCR4A |= (1<<COM4A1)|(0<<COM4A0)|(1<<WGM41)|(0<<WGM40); // non-inverting, 15 bit resolution fast PWM
-//V2.0		TCCR4B |= (1<<WGM43)|(1<<WGM42)|(0<<CS42)|(1<<CS41)|(0<<CS40);	// DIV8 prescaler	
-//V2.0		ICR4 = 0x7530;
-//V2.0	
-//V2.0		//LED's
-//V2.0		TCCR0A |= (1<<COM0A1)|(1<<COM0A0)|(1<<COM0B1)|(1<<COM0B0)|(1<<WGM01)|(1<<WGM00); // inverting, 8 bit fast PWM
-//V2.0		TCCR0B |= (0<<WGM02)|(0<<CS02)|(1<<CS01)|(1<<CS00); // DIV64 prescaler, try and run LED's below 1kHz
-//V2.0		
-//V2.0		TCCR2A |= (0<<COM2A1)|(0<<COM2A0)|(1<<COM2B1)|(1<<COM2B0)|(1<<WGM21)|(1<<WGM20); // inverting, 8 bit fast PWM, Blue is OC2B
-//V2.0		TCCR2B |= (0<<WGM22)|(0<<CS22)|(0<<CS21)|(1<<CS20); //DIV1 prescaler (for control timer)
-//V2.0		
+
+	//Motor Pins
+		DDRB |= (1<<MOTOR_A_PWM)|(1<<MOTOR_B_PWM);
+		DDRB |= (1<<MOTOR_A_PHA)|(1<<MOTOR_B_PHA);
+
+	//Motor PWM
+		//V1 was OC1A and OC1B
+		//V2  is OC0A and OC0B
+		TCCR0A |= (1<<COM1A1)|(0<<COM1A0)|(1<<COM1B1)|(0<<COM1B0)|(1<<WGM11)|(0<<WGM10); 	// Non-inverting, 16 bit fast PWM
+		TCCR0B |= (1<<WGM13)|(1<<WGM12)|(0<<CS12)|(0<<CS11)|(1<<CS10); 						// DIV1 prescaler
+		ICR1 	= 0xFFFF; 																	//set TOP
+
+	//Encoders
+		//V1 was PC2, PC3, PE0, PE1 ... PCINT 10,11,24,25
+		//V2  is PA0, PA1, PA2, PA3 ... PCINT 0:3
+		DDRA 	&= ~((1<<MOTOR_A_ENC_1)|(1<<MOTOR_A_ENC_2)|(1<<MOTOR_B_ENC_1)|(1<<MOTOR_B_ENC_2));		//Direction to INPUT
+		PORTA 	|=   (1<<MOTOR_A_ENC_1)|(1<<MOTOR_A_ENC_2)|(1<<MOTOR_B_ENC_1)|(1<<MOTOR_B_ENC_2);		//Enable internal PULLUPs
+		PCMSK0   =   (1<<PCINT0)|(1<<PCINT1)|(1<<PCINT2)|(1<<PCINT3);									//Enable Pin Change Mask
+		PCICR 	|=   (1<<PCIE0);																		//Enable interrupt on pin change
+		
+//DELETE	//Servo
+//DELETE	DDRD |= (1<<SERVO_A)|(1<<SERVO_B);
+//DELETE	TCCR3A |= (1<<COM3A1)|(0<<COM3A0)|(1<<WGM31)|(0<<WGM30); // non-inverting, 15 bit resolution fast PWM
+//DELETE	TCCR3B |= (1<<WGM33)|(1<<WGM32)|(0<<CS32)|(1<<CS31)|(0<<CS30); // DIV8 prescaler, TOP 20,000 to run at 50 Hz for 20ms pulse
+//DELETE	ICR3 = 0x7530;
+
+//DELETE	TCCR4A |= (1<<COM4A1)|(0<<COM4A0)|(1<<WGM41)|(0<<WGM40); // non-inverting, 15 bit resolution fast PWM
+//DELETE	TCCR4B |= (1<<WGM43)|(1<<WGM42)|(0<<CS42)|(1<<CS41)|(0<<CS40);	// DIV8 prescaler	
+//DELETE	ICR4 = 0x7530;
+	
+	//LED's
+		DDRC |= 0x0C;	//LEDs on C3:2
+		DDRD |= 0xE0;	//RGB on D7:5
+	
+	
+	//LEDR	was OC0A	now OC2A
+	//LEDG	was OC0B	now OC1A
+	//LEDB	was OC2B	now OC2B
+	
+	//GREEN ON A
+		TCCR1A |= (1<<COM0A1)|(1<<COM0A0)|(0<<COM0B1)|(0<<COM0B0)|(1<<WGM01)|(1<<WGM00); 			// inverting, 8 bit fast PWM
+		TCCR1B |= (0<<WGM02)|(0<<CS02)|(0<<CS01)|(1<<CS00);
+		
+	//RED on A and BLUE on B
+		TCCR2A |= (1<<COM2A1)|(1<<COM2A0)|(1<<COM2B1)|(1<<COM2B0)|(1<<WGM21)|(1<<WGM20); 			// inverting, 8 bit fast PWM
+		TCCR2B |= (0<<WGM22)|(0<<CS22)|(0<<CS21)|(1<<CS20);
+		
 //V2.0		//Buttons (external pullups)
 //V2.0		DDRB &= ~(1<<BTN_A);
 //V2.0		PCMSK0 |= (1<<PCINT0);
@@ -673,177 +416,33 @@ void init(void){
 //V2.0		//Pi Interrupt
 //V2.0		DDRB |= (1<<PB5);
 //V2.0		PORTB |= (1<<PB5);
-//V2.0	
-//V2.0		//8 bit controller timer
-//V2.0		TIMSK2 |= (1<<TOIE2);
-//V2.0	
-//V2.0		//ADC
-//V2.0		ADMUX = (0<<REFS1)|(1<<REFS0)|(0<<MUX3)|(1<<MUX2)|(1<<MUX1)|(0<<MUX0); //AVCC reference voltage with external cap on AREF, multiplex to channel 6
-//V2.0		ADCSRA = (1<<ADEN)|(1<<ADIE)|(1<<ADPS2)|(1<<ADPS1)|(0<<ADPS0);//Enable ADC, enable interrupt, prescaler of 64 (187.5kHz sample rate)
-//V2.0		DIDR0 = (1<<6)|(1<<7);//the iom328pb.h file does not include the ADC6D, 7D defines, and it cannot be saved over. ty atmel
 
-	//uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(BAUD, F_CPU));
-	
-	uart_init( UART_BAUD_SELECT(BAUD, F_CPU) );
+	//8 bit controller timer
+		TIMSK2 |= (1<<TOIE2);
+
+	//ADC
+		DIDR0	= (1<<ADC6D)|(1<<ADC7D);
+		ADMUX 	= (0<<REFS1)|(1<<REFS0)|(0<<MUX4)|(0<<MUX3)|(1<<MUX2)|(1<<MUX1)|(0<<MUX0); 	//AVCC reference voltage with external cap on AREF, multiplex to channel 6
+		ADCSRA 	= (1<<ADEN) |(1<<ADIE) |(1<<ADPS2)|(1<<ADPS1)|(0<<ADPS0);					//Enable ADC, enable interrupt, prescaler of 64 (187.5kHz sample rate)
+//This access at mo puts device into a loop cycle												
+
+	uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(BAUD, F_CPU));
 	
 	i2c_init();
 
 	sei();
 }
 
-void init_display(void){
-	//initialises the 7 segment display controller
-	uint8_t reg[2] = {0, 0};
-	i2cWritenBytes(reg, displayA.address, CONFIG_0, 2); //configures both ports as outputs
-	i2cWritenBytes(reg, displayA.address, OUTPUT_0, 2); //sets both outputs to 0
-}
-
-void detect_reset(void){
-	//read MCUSR and determine what reset the AVR
-	uint8_t reg = MCUSR;
-	MCUSR = 0x00;
-	switch (reg){
-		case 1:
-			uart1_puts_P("Device Reset from Power On Reset\n");
-		break;
-		case 2:
-			uart1_puts_P("Device Reset from External Reset\n");
-		break;
-		case 4:
-			uart1_puts_P("Device Reset from Brown Out Detector\n");
-		break;
-		case 8:
-			uart1_puts_P("Device Reset from Watchdog Timeout\n");
-		break;
-		default:
-		uart1_puts_P("Device turned on\n");
-		break;
-	}
-}
-
-
-uint16_t mapRanges(uint16_t a, uint16_t amin, uint16_t amax, uint16_t omin, uint16_t omax){
-	return ((a-amin)*((omax-omin)/(amax-amin))) + omin; //maps from scale amin->amax to scale omin->omax
-}
 
 
 
-void update_dd7s(Display *display){//TODO: fix this up
-	uint8_t reg[2]= {0, 0}; // MS, LS digits
-    uint8_t value = display->value;
-    int8_t  svalue;
-
-    switch (display->mode) {
-    case 0: // hex mode
-        reg[0] = digit0[(value>>4) & 0x0f];
-        reg[1] = digit1[value & 0x0f];
-        break;
-    case 1: // unsigned decimal, light up the decimal point
-        if (value > 99)
-            value = 99;
-        reg[0] = digit0[(uint8_t)value/10];
-        reg[1] = digit1[(uint8_t)value%10]|SEGMENTDP_1;
-        break;
-    case 2: // signed decimal -9 to +9
-        svalue = (int8_t) value;
-        if (svalue < -9)
-            svalue = -9;
-        else if (svalue > 9)
-            svalue = 9;
-        if (svalue < 0)
-			reg[0] = SEGMENTG_0;    // minus sign
-        reg[1] = digit1[abs(svalue)]|SEGMENTDP_1;
-        break;
-    }
-    /*
-	//determine the best way to display the value
-	if(display->value != 0xFF){
-		displayBase10(reg, display->value);
-	}else{
-
-	}
-	//if(display->digit0 != 0xFF) reg[0] = digit0[display->digit0];//digit0 and digit1 will override value
-	//if(display->digit1 != 0xFF) reg[1] = digit1[display->digit1];
-    */
-
-	i2cWritenBytes(reg, display->address, OUTPUT_0, 2);
-}
-
-void displayBase10(uint8_t *reg, int16_t value){
-	if(value < 0){
-		//negative numbers
-		if(value > -1){
-			//decimal
-
-		}else if(value < -15){
-			//too low to display
-			reg[0] = SEGMENTG_0;
-			reg[1] = DIGIT1_O;
-		}else{
-			reg[0] = SEGMENTG_0;
-			reg[1] = digit1[abs(value)]|SEGMENTDP_1;
-		}
-	}else{
-		//positive numbers
-		if(value < 1){
-			//decimal
-			reg[0] = digit0[(uint8_t)value*10];
-		}else if(value < 10){
-			//can still display 1 decimal place
-		}else if(value > 10){
-			//only integers here
-			reg[0] = digit0[(uint8_t)value/10];
-			reg[1] = digit1[(uint8_t)value%10]|SEGMENTDP_1;
-		}
-	}
-}
 
 
-void i2cReadnBytes(uint8_t *data, uint8_t address, uint8_t reg, uint8_t n){
-	i2c_start_wait(address+I2C_WRITE);
-	i2c_write(reg);				//where to read
-	i2c_rep_start(address+I2C_READ);
-	
-	for(uint8_t i = 0; i < n-1; i++){
-		data[i] = i2c_readAck();
-	}
-	data[n-1] = i2c_readNak();
-	i2c_stop();
-}
-
-int8_t i2cWriteByte(uint8_t data, uint8_t address, uint8_t reg){
-	i2c_start_wait(address+I2C_WRITE);
-	i2c_write(reg); //where to write...
-	i2c_write(data);
-	i2c_stop();
-	return 1;//completed all writes without failure
-}
-
-int8_t i2cWritenBytes(uint8_t *data, uint8_t address, uint8_t reg, uint8_t n){
-	i2c_start_wait(address+I2C_WRITE);
-	i2c_write(reg); //where to write...
-	for(uint8_t i = 0; i < n; i++){
-		i2c_write(data[i]);
-	}
-	i2c_stop();
-	return 1;//completed all writes without failure
-}
 
 
-uint8_t crc8(uint8_t *word, uint8_t length){
-	uint8_t crc = 0;
-	for(uint8_t i=0; i < length; i++){
-		crc ^= word[i];
-		for(uint8_t j=0; j < 8; j++){
-			if(crc & 1) crc = (crc >> 1) ^ CRC_8_POLY;
-			else crc = (crc >> 1);
-		}
-	}
-	return crc;
-}
 
 uint8_t checkBuffer(void){
-	uint16_t com = uart1_getc();
+	uint16_t com = uart_getc();
 	
 	if(com & UART_NO_DATA){
 		// there's no data available
@@ -852,7 +451,7 @@ uint8_t checkBuffer(void){
 		//check for errors
         if(com & UART_FRAME_ERROR){
             /* Framing Error detected, i.e no stop bit detected */
-            uart1_puts_P("ERROR: Bad UART Frame\n");
+            uart_puts_P("ERROR: Bad UART Frame\n");
 			//flash Blue LED
 			ledB.state = 1;
 			ledB.count = 1000;
@@ -864,7 +463,7 @@ uint8_t checkBuffer(void){
                 * not read by the interrupt handler before the next character arrived,
                 * one or more received characters have been dropped
                 */
-            uart1_puts_P("ERROR: UART Buffer Overrun\n");
+            uart_puts_P("ERROR: UART Buffer Overrun\n");
 			//flash BLUE LED
 			ledB.state = 1;
 			ledB.count = 1000;
@@ -875,7 +474,7 @@ uint8_t checkBuffer(void){
                 * We are not reading the receive buffer fast enough,
                 * one or more received character have been dropped 
                 */
-            uart1_puts_P("ERROR: UART Buffer Overflow\n");
+            uart_puts_P("ERROR: UART Buffer Overflow\n");
 			//flash BLUE LED
 			ledB.state = 1;
 			ledB.count = 1000;
@@ -883,36 +482,6 @@ uint8_t checkBuffer(void){
         }
 		return com & 0xFF;//return lowbyte
 	}
-}
-
-float readFloat(uint8_t *flMem){
-	/*
-	* Method courtesy AVR Freaks user 'clawson'
-	* http://www.avrfreaks.net/forum/converting-4-bytes-float-help
-	*/
-	for(uint8_t i=0; i<4; i++){
-		#ifdef LITTLE_ENDIAN
-		// fill in 0, 1, 2, 3
-		floatChar.c[i] = flMem[i];
-		#else
-		// fill in 3, 2, 1, 0
-		floatChar.c[3-i] = flMem[i];
-		#endif
-	}
-	return floatChar.f;
-}
-
-uint8_t *float2char(float f){
-	floatChar.f = f;
-	return floatChar.c;
-}
-
-void uart1putcs(uint8_t *datagram){
-	uart1_putc(STARTBYTE);
-	for(uint8_t i = 0; i < datagram[0]; i++){
-		uart1_putc(datagram[i]);
-	}
-	//uart1_putc(STOPBYTE);
 }
 
 void formdatagram(uint8_t *datagram, uint8_t address, uint8_t opCode, union dgramMem payl, uint8_t type){
@@ -961,7 +530,7 @@ void parseDatagram(uint8_t *datagram){
 		
 		datagram[i] = checkBuffer();
 		if(i >= DGRAM_MAX_LENGTH){
-			uart1_puts_P("ERROR: Datagram Buffer Overflow\n");
+			uart_puts_P("ERROR: Datagram Buffer Overflow\n");
 			ledB.state = 1;
 			ledB.count = 1000;
 			return;
@@ -973,7 +542,7 @@ void parseDatagram(uint8_t *datagram){
 	datagram[0] -= 1;	
 
 	if(crcCalc != crcDgram){
-		uart1_puts_P("ERROR: CRC Failed\n");
+		uart_puts_P("ERROR: CRC Failed\n");
 		ledB.state = 1;
 		ledB.count = 1000;
 		return;
@@ -987,12 +556,12 @@ void parseDatagram(uint8_t *datagram){
 			parseMotorOp(datagram, &motorB);
 		break;
 		
-		case AD_SERVO_A:
-			parseServoOp(datagram, &servoA);
-		break;
-		case AD_SERVO_B:
-			parseServoOp(datagram, &servoB);
-		break;
+//DELETE		case AD_SERVO_A:
+//DELETE			parseServoOp(datagram, &servoA);
+//DELETE		break;
+//DELETE		case AD_SERVO_B:
+//DELETE			parseServoOp(datagram, &servoB);
+//DELETE		break;
 		
 		case AD_LED_R:
 			parseLEDOp(datagram, &ledR);
@@ -1030,7 +599,7 @@ void parseDatagram(uint8_t *datagram){
 		break;
 		
 		default:
-			uart1_puts_P("ERROR: Unknown Address\n");
+			uart_puts_P("ERROR: Unknown Address\n");
 			//flash BLUE LED
 			ledB.state = 1;
 			ledB.count = 1000;
@@ -1057,7 +626,7 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 				ledB.state = 1;
 				ledB.count = 1000;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case MOTOR_SET_DEGREES:
@@ -1073,7 +642,7 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 				else if(degrees < 0) motor->dir = -1;
 				else motor->dir = 0;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case MOTOR_SET_ENC:
@@ -1090,7 +659,7 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 				else if(direction < 0) motor->dir = -1;
 				else motor->dir = 0;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case MOTOR_SET_GAIN_P:
@@ -1100,7 +669,7 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 				motor->gainP = readFloat(flMem) * PID_SCALE;
 				motor->maxError = INT16_MAX / (motor->gainP + 1);				
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case MOTOR_SET_GAIN_I:
@@ -1110,7 +679,7 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 				motor->gainI = readFloat(flMem) * PID_SCALE;
 				motor->maxErrorSum = (INT32_MAX / 2) / (motor->gainI + 1);
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case MOTOR_SET_GAIN_D:
@@ -1119,7 +688,7 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 				for(uint8_t i=0; i<4; i++) flMem[i] = datagram[3+i];
 				motor->gainD = readFloat(flMem) * PID_SCALE;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case MOTOR_SET_ENC_MODE:
@@ -1131,7 +700,7 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 				motor->degrees = 0;
 				motor->dir = 0;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case MOTOR_SET_CONTROL_MODE:
@@ -1142,7 +711,7 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 				motor->degrees = 0;
 				motor->dir = 0;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		
@@ -1150,168 +719,58 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 		case MOTOR_GET_SPEED_DPS:
 			dgrammem.in = motor->speedDPS;
 			formdatagram(datagramG, datagram[1], MOTOR_SET_SPEED_DPS, dgrammem, 'i');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;	
 		case MOTOR_GET_DEGREES:
 			dgrammem.in = motor->degrees;
 			formdatagram(datagramG, datagram[1], MOTOR_SET_DEGREES, dgrammem, 'i');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case MOTOR_GET_DIRECTION:
 			dgrammem.ch = motor->dir;
 			formdatagram(datagramG, datagram[1], MOTOR_SET_DIRECTION, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case MOTOR_GET_GAIN_P:
 			dgrammem.fl = motor->gainP/PID_SCALE;
 			formdatagram(datagramG, datagram[1], MOTOR_SET_GAIN_P, dgrammem, 'f');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;	
 		case MOTOR_GET_GAIN_I:
 			dgrammem.fl = motor->gainI/PID_SCALE;
 			formdatagram(datagramG, datagram[1], MOTOR_SET_GAIN_I, dgrammem, 'f');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case MOTOR_GET_GAIN_D:
 			dgrammem.fl = motor->gainD/PID_SCALE;
 			formdatagram(datagramG, datagram[1], MOTOR_SET_GAIN_D, dgrammem, 'f');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case MOTOR_GET_ENC_MODE:
 			dgrammem.ch = motor->encoderMode;
 			formdatagram(datagramG, datagram[1], MOTOR_SET_ENC_MODE, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case MOTOR_GET_CONTROL_MODE:
 			dgrammem.ch = motor->controlMode;
 			formdatagram(datagramG, datagram[1], MOTOR_SET_CONTROL_MODE, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case MOTOR_GET_ENC:
             cli();
                 dgrammem.in = motor->position;
             sei();
 			formdatagram(datagramG, datagram[1], MOTOR_SET_ENC, dgrammem, 'i');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		
 		default:
-			uart1_puts_P("ERROR: Unknown OpCode\n");
+			uart_puts_P("ERROR: Unknown OpCode\n");
 			//flash BLUE LED
 			ledB.state = 1;
 			ledB.count = 1000;
 		break;		
 	}
-}
-
-void parseServoOp(uint8_t *datagram, Servo *servo){
-	switch(datagram[2]){
-		//SETTERS
-		case SERVO_SET_POSITION:
-			if(datagram[0] == 5){
-				int16_t pos = (datagram[3]<<8)|datagram[4];
-				if(pos > servo->maxRange) pos = servo->maxRange;
-				else if(pos < servo->minRange) pos = servo->minRange;
-				servo->setPos = pos;
-				servo->state = 1;
-			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
-			}
-		break;
-		case SERVO_SET_STATE:
-			if(datagram[0] == 4){
-				int8_t state = datagram[3];
-				if(state >= 1) servo->state = 1;
-				else servo->state = 0;
-			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
-			}
-		break;
-		case SERVO_SET_MIN_RANGE:
-			if(datagram[0] == 5){
-				int16_t min = (datagram[3]<<8)|datagram[4];
-				if(min < 0) min = 0;
-				if(min > 360) min = 360;
-				if(min > servo->maxRange) min = servo->maxRange;
-				servo->minRange = min;
-			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
-			}
-		break;
-		case SERVO_SET_MAX_RANGE:
-			if(datagram[0] == 5){
-				int16_t max = (datagram[3]<<8)|datagram[4];
-				if(max < 0) max = 0;
-				if(max > 360) max = 360;
-				if(max < servo->minRange) max = servo->minRange;
-				servo->maxRange = max;
-			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
-			}
-		break;
-		case SERVO_SET_MIN_PWM:
-			if(datagram[0] == 5){
-				uint16_t min = (datagram[3]<<8)|datagram[4];
-				if(min < 0) min = 0;
-				if(min > 30000) min = 30000;
-				if(min > servo->maxPWM) min = servo->maxPWM;
-				servo->minPWM = min;
-			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
-			}
-		break;
-		case SERVO_SET_MAX_PWM:
-			if(datagram[0] == 5){
-				uint16_t max = (datagram[3]<<8)|datagram[4];
-				if(max < 0) max = 0;
-				if(max > 30000) max = 30000;
-				if(max < servo->minPWM) max = servo->minPWM;
-				servo->maxPWM = max;
-			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
-			}
-		break;
-
-		//GETTERS
-		case SERVO_GET_POSITION:
-			dgrammem.in = servo->setPos;
-			formdatagram(datagramG, datagram[1], SERVO_SET_POSITION, dgrammem, 'i');
-			uart1putcs(datagramG);
-		break;
-		case SERVO_GET_STATE:
-			dgrammem.ch = servo->state;
-			formdatagram(datagramG, datagram[1], SERVO_SET_STATE, dgrammem, 'c');
-			uart1putcs(datagramG);
-		break;
-		case SERVO_GET_MIN_RANGE:
-			dgrammem.in = servo->minRange;
-			formdatagram(datagramG, datagram[1], SERVO_SET_MIN_RANGE, dgrammem, 'i');
-			uart1putcs(datagramG);
-		break;
-		case SERVO_GET_MAX_RANGE:
-			dgrammem.in = servo->maxRange;
-			formdatagram(datagramG, datagram[1], SERVO_SET_MAX_RANGE, dgrammem, 'i');
-			uart1putcs(datagramG);
-		break;
-		case SERVO_GET_MIN_PWM:
-			dgrammem.in = servo->minPWM;
-			formdatagram(datagramG, datagram[1], SERVO_SET_MIN_PWM, dgrammem, 'i');
-			uart1putcs(datagramG);
-		break;
-		case SERVO_GET_MAX_PWM:
-			dgrammem.in = servo->maxPWM;
-			formdatagram(datagramG, datagram[1], SERVO_SET_MAX_PWM, dgrammem, 'i');
-			uart1putcs(datagramG);
-		break;
-
-		default:
-			uart1_puts_P("ERROR: Unknown OpCode\n");
-			//flash BLUE LED
-			ledB.state = 1;
-			ledB.count = 1000;
-		break;
-	}
-	
 }
 
 void parseLEDOp(uint8_t *datagram, LED *led){
@@ -1323,7 +782,7 @@ void parseLEDOp(uint8_t *datagram, LED *led){
 				if(state >= 1) led->state = 1;
 				else led->state = 0;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case LED_SET_BRIGHTNESS:
@@ -1333,14 +792,14 @@ void parseLEDOp(uint8_t *datagram, LED *led){
 				else if(brightness > 0) led->brightness = brightness;
 				else led->brightness = 0;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case LED_SET_COUNT:
 			if(datagram[0] == 5){
 				led->count = (datagram[3]<<8)|datagram[4];
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 
@@ -1348,21 +807,21 @@ void parseLEDOp(uint8_t *datagram, LED *led){
 		case LED_GET_STATE:
 			dgrammem.ch = led->state;
 			formdatagram(datagramG, datagram[1], LED_SET_STATE, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case LED_GET_BRIGHTNESS:
 			dgrammem.ch = led->brightness;
 			formdatagram(datagramG, datagram[1], LED_SET_BRIGHTNESS, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case LED_GET_COUNT:
 			dgrammem.uin = led->count;
 			formdatagram(datagramG, datagram[1], LED_SET_COUNT, dgrammem, 'i');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 
 		default:
-			uart1_puts_P("ERROR: Unknown OpCode\n");
+			uart_puts_P("ERROR: Unknown OpCode\n");
 			//flash BLUE LED
 			ledB.state = 1;
 			ledB.count = 1000;
@@ -1378,7 +837,7 @@ void parseDisplayOp(uint8_t *datagram, Display *display){
 				display->value = datagram[3];
 				display->draw = 1;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case DISPLAY_SET_DIGIT_0:
@@ -1389,7 +848,7 @@ void parseDisplayOp(uint8_t *datagram, Display *display){
 				else display->digit0 = digit;
 				display->draw = 1;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case DISPLAY_SET_DIGIT_1:
@@ -1400,14 +859,14 @@ void parseDisplayOp(uint8_t *datagram, Display *display){
 				else display->digit1 = digit;
 				display->draw = 1;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
         case DISPLAY_SET_MODE:
 			if(datagram[0] == 4){
 				display->mode = datagram[3];
 				display->draw = 1;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		
@@ -1415,26 +874,26 @@ void parseDisplayOp(uint8_t *datagram, Display *display){
 		case DISPLAY_GET_VALUE:
 			dgrammem.ch = display->value;
 			formdatagram(datagramG, datagram[1], DISPLAY_SET_VALUE, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case DISPLAY_GET_DIGIT_0:
 			dgrammem.ch = display->digit0;
 			formdatagram(datagramG, datagram[1], DISPLAY_SET_DIGIT_0, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case DISPLAY_GET_DIGIT_1:
 			dgrammem.ch = display->digit1;
 			formdatagram(datagramG, datagram[1], DISPLAY_SET_DIGIT_1, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case DISPLAY_GET_MODE:
 			dgrammem.ch = display->mode;
 			formdatagram(datagramG, datagram[1], DISPLAY_SET_MODE, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		
 		default:
-			uart1_puts_P("ERROR: Unknown OpCode\n");
+			uart_puts_P("ERROR: Unknown OpCode\n");
 			//flash BLUE LED
 			ledB.state = 1;
 			ledB.count = 1000;
@@ -1451,7 +910,7 @@ void parseButtonOp(uint8_t *datagram, Button *btn){
 				if(mode == 1) btn->programMode = 1;
 				else if(mode == 0) btn->programMode = 0;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		case BUTTON_SET_PIN_MODE:
@@ -1460,7 +919,7 @@ void parseButtonOp(uint8_t *datagram, Button *btn){
 				if(mode == 1) btn->pinMode = 1;
 				else if(mode == 0) btn->pinMode = 0;
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		
@@ -1468,16 +927,16 @@ void parseButtonOp(uint8_t *datagram, Button *btn){
 		case BUTTON_GET_PROGRAM_MODE:
 			dgrammem.ch = btn->programMode;
 			formdatagram(datagramG, datagram[1], BUTTON_SET_PROGRAM_MODE, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case BUTTON_GET_PIN_MODE:
 			dgrammem.ch = btn->pinMode;
 			formdatagram(datagramG, datagram[1], BUTTON_SET_PIN_MODE, dgrammem, 'c');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		
 		default:
-			uart1_puts_P("ERROR: Unknown OpCode\n");
+			uart_puts_P("ERROR: Unknown OpCode\n");
 			//flash BLUE LED
 			ledB.state = 1;
 			ledB.count = 1000;
@@ -1494,7 +953,7 @@ void parseADCOp(uint8_t *datagram, AnalogIn *adc){
 				for(uint8_t i=0; i<4; i++) flMem[i] = datagram[3+i];
 				adc->scale = readFloat(flMem);
 			}else{
-				uart1_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR: Incorrect Type\n");
 			}
 		break;
 		
@@ -1502,21 +961,21 @@ void parseADCOp(uint8_t *datagram, AnalogIn *adc){
 		case ADC_GET_SCALE:
 			dgrammem.fl = adc->scale;
 			formdatagram(datagramG, datagram[1], ADC_SET_SCALE, dgrammem, 'f');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case ADC_GET_RAW:
 			dgrammem.in = adc->raw;
 			formdatagram(datagramG, datagram[1], ADC_SET_RAW, dgrammem, 'i');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		case ADC_GET_READING:
 			dgrammem.fl = adc->value;
 			formdatagram(datagramG, datagram[1], ADC_SET_READING, dgrammem, 'f');
-			uart1putcs(datagramG);
+			uartputcs(datagramG);
 		break;
 		
 		default:
-			uart1_puts_P("ERROR: Unknown OpCode\n");
+			uart_puts_P("ERROR: Unknown OpCode\n");
 			//flash BLUE LED
 			ledB.state = 1;
 			ledB.count = 1000;
@@ -1533,8 +992,8 @@ void parseAllOp(uint8_t *datagram){
 			motorB.position = 0;
 			motorB.setDegrees = 0;
 			motorB.setSpeedDPS = 0;
-			servoA.state = 0;
-			servoB.state = 0;
+//DELETE			servoA.state = 0;
+//DELETE			servoB.state = 0;
 			displayA.draw = 0;
 			ledR.state = 0;
 			ledG.state = 0;
@@ -1543,8 +1002,8 @@ void parseAllOp(uint8_t *datagram){
 		case CLEAR_DATA:
 			motorA = (Motor){0};
 			motorB = (Motor){0};
-			servoA = (Servo){0};
-			servoB = (Servo){0};
+//DELETE			servoA = (Servo){0};
+//DELETE			servoB = (Servo){0};
 			ledR = (LED){0};
 			ledG = (LED){0};
 			ledB = (LED){0};
@@ -1557,7 +1016,7 @@ void parseAllOp(uint8_t *datagram){
 		break;
 		
 		default:
-			uart1_puts_P("ERROR: Unknown OpCode\n");
+			uart_puts_P("ERROR: Unknown OpCode\n");
 			//flash BLUE LED
 			ledB.state = 1;
 			ledB.count = 1000;
@@ -1565,42 +1024,346 @@ void parseAllOp(uint8_t *datagram){
 	}
 }
 
-int16_t motorPIDControl(int16_t setPoint, Motor *motor){
-	//based upon Application Note AVR221
-	int16_t error = setPoint - motor->degrees;
 
-	int16_t pTerm, dTerm;
-	int32_t iTerm;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//#################################################################################################
+//
+// Put main last so easier to find and navigate the file
+//
+//#################################################################################################
+
+int16_t main(void){
+
+	init_structs();
+	init();	
+//DELETE	init_display();
+
+	ledB.state = 1;
+	ledB.count = 10000;
+	ledR.state = 1;
+	ledR.count = 10000;	
+
+
+	uart_puts_P("PenguinPi v2.0\n");
 	
-	//P term, also limit overflow
-	if(error > motor->maxError)			pTerm = INT16_MAX;
-	else if(error < -motor->maxError)	pTerm = -INT16_MAX;
-	else								pTerm = motor->gainP * error;
+	detect_reset();
 	
-	//I term, also limit overflow
-	int32_t newSum = motor->errorSum + error;
-	if(newSum > motor->maxErrorSum){
-		motor->errorSum = motor->maxErrorSum;
-		iTerm = INT32_MAX/2;
-	}else if(newSum < -motor->maxErrorSum){
-		motor->errorSum = -motor->maxErrorSum;
-		iTerm = -(INT32_MAX/2);
-	}else{
-		motor->errorSum = newSum;
-		iTerm = motor->gainI * motor->errorSum;
+//INIT Done	
+	
+
+//TESTS
+	//LEDs
+	for(uint8_t j = 0; j < 3; j++) {
+		PORTC= 0x00;
+		_delay_ms(500);		
+		PORTC= 0x0C;
+		_delay_ms(500);		
 	}
 
-	//D term //put this on a slower interval
-	dTerm = motor->gainD * (motor->lastVal - motor->degrees);
-	
-	motor->lastVal = motor->degrees;
-	
-	int32_t result = (pTerm + iTerm + dTerm)/PID_SCALE;
-	
-	if(result > INT16_MAX) result = INT16_MAX;
-	else if(result < -INT16_MAX) result = -INT16_MAX;
-	
-	return (int16_t)result;		
-}
 
+	//RGB
+	redLEDPercent(50);	
+	_delay_ms(500);
+	redLEDPercent(100);	
+	_delay_ms(500);
+	redLEDPercent(0);	
+	greenLEDPercent(50);
+	_delay_ms(500);
+	greenLEDPercent(100);
+	_delay_ms(500);	
+	greenLEDPercent(0);
+	blueLEDPercent(50);
+	_delay_ms(500);
+	blueLEDPercent(100);
+	_delay_ms(500);	
+	blueLEDPercent(0);
+//END TESTS
+	
+	uint8_t com;
+
+	vdiv.count = ADC_COUNT;
+	ADCSRA |= (1<<ADSC);		//start the first ADC conversion
+	
+    while (1) 
+    {
+		com = checkBuffer();					
+		if(com == STARTBYTE){
+			parseDatagram(datagramG);
+		}
+		//cleanup buffers
+		com = 0;
+		for(uint8_t j = 0; j < DGRAM_MAX_LENGTH; j++) datagramG[j] = 0;
+		dgrammem.fl = 0;
+
+		if ( DEBUG==1 ) {
+			sprintf(fstring, "encA: %6d\n", motorA.position);
+			uart_puts(fstring);
+			sprintf(fstring, "encB: %6d\n", motorB.position);
+			uart_puts(fstring);
+		}
+
+		motorA.degrees = motorA.position * DEGPERCOUNT;
+		motorB.degrees = motorB.position * DEGPERCOUNT;
+
+
+        /*
+         * this is the non-PID code that needs to be run only if motor->controlMode == 0
+         */
+		OCR0B = mapRanges(abs(motorA.setSpeedDPS), 0, 100, 0, 0xFFFF);
+
+		if(motorA.dir == 1){
+			PORTB |= (1<<MOTOR_A_PHA);
+		} else if(motorA.dir == -1) {
+			PORTB &= ~(1<<MOTOR_A_PHA);
+		} else {
+			OCR0B = 0;
+		}
+
+		OCR0A = mapRanges(abs(motorB.setSpeedDPS), 0, 100, 0, 0xFFFF);
+
+		if(motorB.dir == 1){
+			PORTB &= ~(1<<MOTOR_B_PHA);
+			}else if(motorB.dir == -1){
+			PORTB |= (1<<MOTOR_B_PHA);
+			}else{
+			OCR0A = 0;
+		}
+
+        /*
+         * this is the PID code that needs to be reinstated if motor->controlMode == 1
+         */
+		//Motor update		
+		/*if(motorA.pidTimerFlag == 1){
+			motorA.degrees = motorA.position * DEGPERCOUNT;
+			int16_t result = motorPIDControl(motorA.setDegrees, &motorA);
+			
+			OCR1B = (mapRanges(abs(result), 0, 0xFFFF, MOTOR_PWM_RANGE_MIN, 0xFFFF));
+			if(result > 0){
+				motorA.dir = 1;
+				//PORTC &= ~(1<<MOTOR_A_PHA);//reversed
+				PORTC |= (1<<MOTOR_A_PHA);
+			}else if(result < 0){
+				motorA.dir = -1;
+				//PORTC |= (1<<MOTOR_A_PHA);//reversed
+				PORTC &= ~(1<<MOTOR_A_PHA);
+			}else{
+				motorA.dir = 0;
+				OCR1B = 0;
+			}
+			motorA.pidTimerFlag = 0;
+		}
+		if(motorB.pidTimerFlag == 1){
+			motorB.degrees = motorB.position * DEGPERCOUNT;
+			int16_t result = motorPIDControl(motorB.setDegrees, &motorB);
+			
+			OCR1A = (mapRanges(abs(result), 0, 0xFFFF, MOTOR_PWM_RANGE_MIN, 0xFFFF));
+			if(result > 0){
+				motorB.dir = 1;
+				//PORTC |= (1<<MOTOR_B_PHA);//reversed
+				PORTC &= ~(1<<MOTOR_B_PHA);
+			}else if(result < 0){
+				motorB.dir = -1;
+				//PORTC &= ~(1<<MOTOR_B_PHA);//reversed
+				PORTC |= (1<<MOTOR_B_PHA);
+			}else{
+				motorB.dir = 0;
+				OCR1A = 0;
+			}
+			motorB.pidTimerFlag = 0;
+		}*/
+		
+//DELETE		//Servo update
+//DELETE		if(servoA.state){
+//DELETE			if(servoA.setPos < servoA.minRange) servoA.setPos = servoA.minRange;//clip the position to within bounds
+//DELETE			if(servoA.setPos > servoA.maxRange) servoA.setPos = servoA.maxRange;
+//DELETE				OCR3A = MAP(servoA.setPos, servoA.minRange, servoA.maxRange, servoA.minPWM, servoA.maxPWM);//bad stuff happens when data types are to small
+//DELETE			//debug
+//DELETE			//sprintf(fstring, "ServoA: %ld deg\n", servoA.setPos);
+//DELETE			//uart_puts(fstring);
+//DELETE			//sprintf(fstring, "Mapped: %ld tic\n", MAP(servoA.setPos, servoA.minRange, servoA.maxRange, servoA.minPWM, servoA.maxPWM));
+//DELETE			//uart_puts(fstring);
+//DELETE			//displayA.value = servoA.setPos/10;
+//DELETE		}else{
+//DELETE			PORTD &= ~(1<<SERVO_A);
+//DELETE		}
+//DELETE		if(servoB.state){
+//DELETE			if(servoB.setPos < servoB.minRange) servoB.setPos = servoB.minRange;
+//DELETE			if(servoB.setPos > servoB.maxRange) servoB.setPos = servoB.maxRange;
+//DELETE				OCR4A = MAP(servoB.setPos, servoB.minRange, servoB.maxRange, servoB.minPWM, servoB.maxPWM);
+//DELETE		}else{
+//DELETE			PORTD &= ~(1<<SERVO_B);
+//DELETE		}
+				
+
+//DELETE		//Display update
+//DELETE		if(displayA.draw){
+//DELETE			update_dd7s(&displayA);
+//DELETE			displayA.draw = 0;
+//DELETE		}
+		
+						
+		//LED update
+		if(ledR.state > 0){
+			if(ledR.brightness > 0) redLEDPercent(ledR.brightness);
+			else LEDOn(LED_R);
+		} else LEDOff(LED_R);
+
+		if(ledG.state > 0){
+			if(ledG.brightness > 0) greenLEDPercent(ledG.brightness);
+			else LEDOn(LED_G);
+		} else LEDOff(LED_G);
+
+		if(ledB.state > 0){ 
+			if(ledB.brightness > 0) blueLEDPercent(ledB.brightness);
+			else LEDOn(LED_B);
+		} else LEDOff(LED_B);
+		
+
+		//Button update
+		if(buttonA.state == 1){
+			ledR.state = 1;
+			ledR.count = 2000;
+// 			displayA.value--;
+// 			displayA.draw = 1;
+			
+			uart_puts_P("This is a shutdown request");
+
+			motorA.position = 0;
+			motorA.setDegrees = 180;
+			motorA.dir = -1;
+			motorB.position = 0;
+			motorB.setDegrees = 180;
+			motorB.dir = 1;
+			if(buttonA.programMode == 0) buttonA.state = 0;
+		}else{
+			
+		}
+		if(buttonB.state == 1){
+			ledG.state = 1;
+			ledG.count = 2000;
+// 			displayA.value = 0;
+// 			displayA.draw = 1;
+
+			motorA.position = 0;
+			motorA.setSpeedDPS = motorA.setSpeedDPS +10;
+			motorA.dir = -1;
+			motorB.position = 0;
+			motorB.setDegrees = -180;
+			motorB.dir = -1;
+			if(buttonB.programMode == 0) buttonB.state = 0;
+		}else{
+			
+		}
+		if(buttonC.state == 1){
+			ledB.state = 1;
+			ledB.count = 2000;
+// 			displayA.value++;
+// 			displayA.draw = 1;
+
+			motorA.position = 0;
+			motorA.setSpeedDPS = motorA.setSpeedDPS -10;
+			motorA.dir = 1;
+			motorB.position = 0;
+			motorB.setDegrees = -180;
+			motorB.dir = -1;
+			if(buttonC.programMode == 0) buttonC.state = 0;
+		}else{
+			
+		}
+
+		//Analog update
+		if(vdiv.ready && !(ADCSRA&(1<<ADSC))){
+			vdiv.raw   = ADC;
+			vdiv.value = vdiv.raw * vdiv.scale/1000;
+			vdiv.ready = 0;
+
+			//change multiplexer to csense
+			ADMUX 		|= (1<<MUX0);//change mux
+			csense.count = ADC_COUNT;
+			ADCSRA 		|= (1<<ADSC);//restart
+
+			if ( DEBUG==1 ) {
+				sprintf(fstring, "Voltage: %5.3f V\n", vdiv.value);
+				uart_puts(fstring);
+			}
+		}
+		if(csense.ready && !(ADCSRA&(1<<ADSC))){
+			csense.raw   = ADC;
+			csense.value = csense.raw * csense.scale;
+			csense.ready = 0;
+
+			//change multiplexer to csense
+			ADMUX 	  &= ~(1<<MUX0);//change mux
+			vdiv.count = ADC_COUNT;
+			ADCSRA 	  |= (1<<ADSC);//restart
+
+			if ( DEBUG==1 ) {		
+				sprintf(fstring, "Current: %5.3f mA\n", csense.value);
+				uart_puts(fstring);
+			}
+		}
+
+		if(vdiv.value < battery.cutoff){
+			if(battery.count < battery.limit) battery.count++;
+			else{
+				//lockout most functions
+				PRR0 |= (1<<PRTIM2)|(1<<PRTIM0)|(1<<PRTIM1);//|(1<<PRADC);
+				//display low battery warning
+				uint8_t reg[2] = {0, 0};
+				reg[0] = DIGIT0_B;
+				reg[1] = DIGIT1_F;
+				i2cWritenBytes(reg, displayA.address, OUTPUT_0, 2);
+								
+				while(1){
+					//send shutdown command
+					uart_puts_P("Low battery shutdown request");
+					PORTB &= ~(1<<PB5);//pull the pin low
+					//loop until the battery really is flat...
+				}			
+			}
+		}else battery.count = 0;
+		
+		
+		if ( DEBUG==1 ) {
+			//TOGGLE LED1 : C3
+			PORTC = PORTC ^ 0x04;
+			_delay_ms(100);
+		}
+		
+    }
+}
 
