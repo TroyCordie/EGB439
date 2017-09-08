@@ -29,8 +29,8 @@ void i2c_init(void)
 {
   /* initialize TWI clock: 100 kHz clock, TWPS = 0 => prescaler = 1 */
   
-  TWSR0 = 0;                         /* no prescaler */
-  TWBR0 = ((F_CPU/SCL_CLOCK)-16)/2;  /* must be > 10 for stable operation */
+  TWSR = 0;                         /* no prescaler */
+  TWBR = ((F_CPU/SCL_CLOCK)-16)/2;	/* must be > 10 for stable operation */
 
 }/* i2c_init */
 
@@ -44,21 +44,21 @@ unsigned char i2c_start(unsigned char address)
     uint8_t   twst;
 
 	// send START condition
-	TWCR0 = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
 
 	// wait until transmission completed
-	while(!(TWCR0 & (1<<TWINT)));
+	while(!(TWCR & (1<<TWINT)));
 
 	// check value of TWI Status Register. Mask prescaler bits.
 	twst = TW_STATUS & 0xF8;
 	if ( (twst != TW_START) && (twst != TW_REP_START)) return 1;
 
 	// send device address
-	TWDR0 = address;
-	TWCR0 = (1<<TWINT) | (1<<TWEN);
+	TWDR = address;
+	TWCR = (1<<TWINT) | (1<<TWEN);
 
 	// wail until transmission completed and ACK/NACK has been received
-	while(!(TWCR0 & (1<<TWINT)));
+	while(!(TWCR & (1<<TWINT)));
 
 	// check value of TWI Status Register. Mask prescaler bits.
 	twst = TW_STATUS & 0xF8;
@@ -83,31 +83,31 @@ void i2c_start_wait(unsigned char address)
     while ( 1 )
     {
 	    // send START condition
-	    TWCR0 = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+	    TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
     
     	// wait until transmission completed
-    	while(!(TWCR0 & (1<<TWINT)));
+    	while(!(TWCR & (1<<TWINT)));
     
     	// check value of TWI Status Register. Mask prescaler bits.
     	twst = TW_STATUS & 0xF8;
     	if ( (twst != TW_START) && (twst != TW_REP_START)) continue;
     
     	// send device address
-    	TWDR0 = address;
-    	TWCR0 = (1<<TWINT) | (1<<TWEN);
+    	TWDR = address;
+    	TWCR = (1<<TWINT) | (1<<TWEN);
     
     	// wail until transmission completed
-    	while(!(TWCR0 & (1<<TWINT)));
+    	while(!(TWCR & (1<<TWINT)));
     
     	// check value of TWI Status Register. Mask prescaler bits.
     	twst = TW_STATUS & 0xF8;
     	if ( (twst == TW_MT_SLA_NACK )||(twst ==TW_MR_DATA_NACK) ) 
     	{    	    
     	    /* device busy, send stop condition to terminate write operation */
-	        TWCR0 = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
+	        TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
 	        
 	        // wait until stop condition is executed and bus released
-	        while(TWCR0 & (1<<TWSTO));
+	        while(TWCR & (1<<TWSTO));
 	        
     	    continue;
     	}
@@ -139,10 +139,10 @@ unsigned char i2c_rep_start(unsigned char address)
 void i2c_stop(void)
 {
     /* send stop condition */
-	TWCR0 = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
+	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
 	
 	// wait until stop condition is executed and bus released
-	while(TWCR0 & (1<<TWSTO));
+	while(TWCR & (1<<TWSTO));
 
 }/* i2c_stop */
 
@@ -159,11 +159,11 @@ unsigned char i2c_write( unsigned char data )
     uint8_t   twst;
     
 	// send data to the previously addressed device
-	TWDR0 = data;
-	TWCR0 = (1<<TWINT) | (1<<TWEN);
+	TWDR = data;
+	TWCR = (1<<TWINT) | (1<<TWEN);
 
 	// wait until transmission completed
-	while(!(TWCR0 & (1<<TWINT)));
+	while(!(TWCR & (1<<TWINT)));
 
 	// check value of TWI Status Register. Mask prescaler bits
 	twst = TW_STATUS & 0xF8;
@@ -180,10 +180,10 @@ unsigned char i2c_write( unsigned char data )
 *************************************************************************/
 unsigned char i2c_readAck(void)
 {
-	TWCR0 = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
-	while(!(TWCR0 & (1<<TWINT)));    
+	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
+	while(!(TWCR & (1<<TWINT)));    
 
-    return TWDR0;
+    return TWDR;
 
 }/* i2c_readAck */
 
@@ -195,9 +195,9 @@ unsigned char i2c_readAck(void)
 *************************************************************************/
 unsigned char i2c_readNak(void)
 {
-	TWCR0 = (1<<TWINT) | (1<<TWEN);
-	while(!(TWCR0 & (1<<TWINT)));
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	while(!(TWCR & (1<<TWINT)));
 	
-    return TWDR0;
+    return TWDR;
 
 }/* i2c_readNak */

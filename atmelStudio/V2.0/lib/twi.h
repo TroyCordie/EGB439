@@ -58,7 +58,7 @@
 /** \ingroup util_twi
     \def TW_START
     start condition transmitted */
-#define TW_START		0x08
+#define TW_START			0x08
 
 /** \ingroup util_twi
     \def TW_REP_START
@@ -215,7 +215,7 @@
  *
  * TWSR, masked by TW_STATUS_MASK
  */
-#define TW_STATUS		(TWSR0 & TW_STATUS_MASK)
+#define TW_STATUS		(TWSR & TW_STATUS_MASK)
 /*@}*/
 
 /**
