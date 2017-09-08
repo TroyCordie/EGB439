@@ -102,7 +102,7 @@ uint16_t mapRanges(uint16_t a, uint16_t amin, uint16_t amax, uint16_t omin, uint
 
 uint8_t crc8(uint8_t *word, uint8_t length);
 uint8_t checkBuffer(void);
-void uart1putcs(uint8_t *datagram);
+void uartputcs(uint8_t *datagram);
 void formdatagram(uint8_t *dgram, uint8_t address, uint8_t opCode, union dgramMem payl, uint8_t type);
 void parseDatagram(uint8_t *datagram);
 
@@ -131,54 +131,62 @@ void displayBase10(uint8_t *reg, int16_t value);
 
 void buttonLogic(Button *button, uint8_t btnVal);
 
+
+
+
+
+//#################################################################################################
+//
+// PINs
+//
+//#################################################################################################
+
+//Board Specific Defines
+#define MOTOR_A_PWM PB3		//V1	PB2
+#define MOTOR_B_PWM PB4		//V1	PB1
+#define MOTOR_A_PHA PB0		//V1	PC0
+#define MOTOR_B_PHA PB1		//V1	PC1
+
+//swapping these definitions and the control logic in the main loop will reverse the running direction of the motors
+#define MOTOR_A_ENC_1 PA0	//V1	PC2
+#define MOTOR_A_ENC_2 PA1	//V1	PC3
+
+#define MOTOR_B_ENC_1 PA2	//V1	PE1
+#define MOTOR_B_ENC_2 PA3	//V1	PE0
+
+//DELETE	#define SERVO_A PD0
+//DELETE	#define SERVO_B PD1
+
+#define LED_Y0	PC2
+#define LED_Y1	PC3
+
+#define LED_R PD7	//OC2A 		//V1 PD6 OC0A
+#define LED_G PD5	//OC1A		//V1 PD5 OC0B
+#define LED_B PD6	//OC2B		//V1 PD3 OC2B
+
+//DELETE	#define BTN_A PB0
+//DELETE	#define BTN_B PD7
+//DELETE	#define BTN_C PD4
+
+//NOT USED	//#define ADC_VDIV 	 PA6	//ADC6		//V1 ADC6	PE2
+//NOT USED	//#define ADC_CSENSE PA7	//ADC7		//V1 ADC7	PE3
+
+//#################################################################################################
+//
+// DEFINEs
+//
+//#################################################################################################
+
 #define RPM2DPS(rpm) rpm*6.0 //convert RPM to deg/s
 #define DPS2RPM(dps) dps/6.0 //convert deg/s to RPM
 #define MAP(a, amin, amax, omin, omax) ((a-amin)*(omax-omin)/(amax-amin)) + omin //maps from scale amin->amax to scale omin->omax
 #define COUNTPERDEG 2.1333334//1.066667 
 #define DEGPERCOUNT 0.46875//0.9375
 
-//Board Specific Defines
-#define UART_RX PB4
-#define UART_TX PB3
-
-#define TWI_SCL PC5
-#define TWI_SDA PC4
-
-#define MOTOR_A_PWM PB2
-#define MOTOR_B_PWM PB1
-#define MOTOR_A_PHA PC0
-#define MOTOR_B_PHA PC1
-
-//#define MOTOR_A_ENC_1 PC2 //swapping these definitions and the control logic in the main loop will reverse the running direction of the motors
-//#define MOTOR_A_ENC_2 PC3
-#define MOTOR_A_ENC_1 PC2
-#define MOTOR_A_ENC_2 PC3
-
-//#define MOTOR_B_ENC_1 PE0
-//#define MOTOR_B_ENC_2 PE1
-#define MOTOR_B_ENC_1 PE1
-#define MOTOR_B_ENC_2 PE0
-
-#define SERVO_A PD0
-#define SERVO_B PD1
-
-#define LED_R PD6
-#define LED_G PD5
-#define LED_B PD3
-
-#define BTN_A PB0
-#define BTN_B PD7
-#define BTN_C PD4
-
-#define ADC_VDIV PE2
-#define ADC_CSENSE PE3
-
-
 //LED limits
 #define RED_MAX 220
 #define GREEN_MAX 120
 #define BLUE_MAX 140
-
 
 //Control Defines
 #define CONTROL_COUNT 1
