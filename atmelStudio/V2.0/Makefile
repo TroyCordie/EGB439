@@ -5,7 +5,7 @@ MCU=atmega644p
 
 CC=avr-gcc
 OBJCOPY=avr-objcopy
-CFLAGS=-Os -DF_CPU=20000000UL -mmcu=${MCU} -Wall -I./lib -std=gnu99
+CFLAGS=-Os -DF_CPU=8000000UL -mmcu=${MCU} -Wall -I./lib -std=gnu99
 
 
 
@@ -13,7 +13,7 @@ ${BIN}.hex: ${BIN}.elf
 	${OBJCOPY} -O ihex $< $@
 
 ${BIN}.elf: ${OBJS}
-	${CC} -mmcu=${MCU} -o $@ $^
+	${CC} -mmcu=${MCU} -Wl,-u,vfprintf -Wl,-lprintf_flt -Wl,-lm -o $@ $^
 
 load: ${BIN}.hex
 	avrdude -v -c pi_isp -p ${MCU} -U flash:w:$<
