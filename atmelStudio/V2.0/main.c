@@ -1,8 +1,6 @@
 /*
- * PenguinPi - HAT - V1.c
+ * main.c
  *
- * Created: 19/09/2016 19:19:41
- * Author : Jack
  */ 
 
 /*
@@ -13,16 +11,16 @@
  * set_degrees() invokes MOTOR_SET_DEGREES which sets motor->setDegrees which is the PID setpoint
  *
  * LED usage:
- *  red - valid command packet
- *  green - encoder ISR
- *  blue - bad command or framing error
+ *  red 	- valid command packet
+ *  green 	- encoder ISR
+ *  blue 	- bad command or framing error
  */
 
 /*
- * cpu is ATmega 328PB
+ * cpu is ATmega 644PA
  */
 #define BAUD 115200
-#define F_CPU 12000000UL
+#define F_CPU 20000000UL
 
 #include <stdlib.h>
 #include <avr/io.h>
@@ -35,6 +33,26 @@
 #include "uart.h"
 #include "PenguinPi.h"
 #include "PCA6416A.h"
+
+
+//TEST_LED	int main(void)
+//TEST_LED	{
+//TEST_LED		DDRC = 0x0C; 	//Output on C3:2
+//TEST_LED		DDRD = 0xE0; 	//Output on D7:5	--RGB
+//TEST_LED		
+//TEST_LED		PORTD= 0xE0;
+//TEST_LED		
+//TEST_LED		
+//TEST_LED		while(1) 		//infinite loop
+//TEST_LED		{	
+//TEST_LED			PORTC= 0x0C;
+//TEST_LED			_delay_ms(500);
+//TEST_LED			
+//TEST_LED			PORTC= 0x00;
+//TEST_LED			_delay_ms(500);		
+//TEST_LED		}
+//TEST_LED	}
+
 
 
 Motor motorA;
@@ -73,191 +91,192 @@ struct Battery {
 	uint16_t limit;//number of cycles until it triggers a shutdown
 } battery;
 
-ISR(PCINT1_vect){
-	//Motor A encoders
-	//detect which pin triggered the interrupt
-	uint8_t enc1val = (PINC & (1<<MOTOR_A_ENC_1))>>MOTOR_A_ENC_1; //store the current state
-	uint8_t enc2val = (PINC & (1<<MOTOR_A_ENC_2))>>MOTOR_A_ENC_2;
-	
-	if(motorA.encoderMode == 0){
-		//single encoder mode, on pin 1
-		//uint8_t encdiff = motorA.enc1PinState ^ enc1val;
-		if(motorA.enc1PinState ^ enc1val){
-			if(motorA.dir == 1){
-				motorA.position++;
-				motorA.lastDir = 1;
-			}else if(motorA.dir == -1){
-				motorA.position--;
-				motorA.lastDir = -1;
-			}else{
-				//wheel slip!!
-				//probably going to still be rotating in the direction it just was, so use that past value
-				if(motorA.lastDir == 1) motorA.position++;
-				else if(motorA.lastDir == -1) motorA.position--;
-			}
-			motorA.enc1PinState = enc1val;
-		}//otherwise there was a tick but it wasn't the first channel...
-
-	}else if(motorA.encoderMode == 1){
-		//standard quadrature
-		uint8_t lastEncSum = (motorA.enc1PinState<<1)|(motorA.enc2PinState);
-		uint8_t encSum = (enc1val<<1)|(enc2val);
-		int8_t effect = mAQuadTable[lastEncSum][encSum];
-
-		motorA.position += effect;
-
-		motorA.enc1PinState = enc1val;
-		motorA.enc2PinState = enc2val;
-
-	}else if(motorA.encoderMode == 2){
-		//x4 counting (xor'ed both channels)
-		uint8_t x4 = enc1val ^ enc2val;
-		if(motorA.enc1PinState ^ x4){
-			if(motorA.dir == 1){
-				motorA.position++;
-				motorA.lastDir = 1;
-			}else if(motorA.dir == -1){
-				motorA.position--;
-				motorA.lastDir = -1;
-			}else{
-				//wheel slip!!
-				//probably going to still be rotating in the direction it just was, so use that past value
-				if(motorA.lastDir == 1) motorA.position++;
-				else if(motorA.lastDir == -1) motorA.position--;
-			}
-			motorA.enc1PinState = x4;
-		}
-	}else{
-		//my mode isn't specified
-		motorA.encoderMode = 1;//set to default
-	}
-
-	ledG.state = 1;
-	ledG.count = 100;
-}
-
-ISR(PCINT3_vect){
-	//Motor B encoders
-	//detect which pin triggered the interrupt
-	uint8_t enc1val = (PINE & (1<<MOTOR_B_ENC_1))>>MOTOR_B_ENC_1; //store the current state
-	uint8_t enc2val = (PINE & (1<<MOTOR_B_ENC_2))>>MOTOR_B_ENC_2;
-	
-	if(motorB.encoderMode == 0){
-		//single encoder mode, on pin 1
-		//uint8_t encdiff = motorB.enc1PinState ^ enc1val;
-		if(motorB.enc1PinState ^ enc1val){
-			if(motorB.dir == 1){
-				motorB.position++;
-				motorB.lastDir = 1;
-			}else if(motorB.dir == -1){
-				motorB.position--;
-				motorB.lastDir = -1;
-			}else{
-				//wheel slip!!
-				//probably going to still be rotating in the direction it just was, so use that past value
-				if(motorB.lastDir == 1) motorB.position++;
-				else if(motorB.lastDir == -1) motorB.position--;
-			}
-			motorB.enc1PinState = enc1val;
-		}//otherwise there was a tick but it wasn't the first channel...
-
-	}else if(motorB.encoderMode == 1){
-		//standard quadrature
-		uint8_t lastEncSum = (motorB.enc1PinState<<1)|(motorB.enc2PinState);
-		uint8_t encSum = (enc1val<<1)|(enc2val);
-		int8_t effect = mBQuadTable[lastEncSum][encSum];
-
-		motorB.position += effect;
-
-		motorB.enc1PinState = enc1val;
-		motorB.enc2PinState = enc2val;
-
-	}else if(motorB.encoderMode == 2){
-		//x4 counting (xor'ed both channels)
-		uint8_t x4 = enc1val ^ enc2val;
-		if(motorB.enc1PinState ^ x4){
-			if(motorB.dir == 1){
-				motorB.position++;
-				motorB.lastDir = 1;
-			}else if(motorB.dir == -1){
-				motorB.position--;
-				motorB.lastDir = -1;
-			}else{
-				//wheel slip!!
-				//probably going to still be rotating in the direction it just was, so use that past value
-				if(motorB.lastDir == 1) motorB.position++;
-				else if(motorB.lastDir == -1) motorB.position--;
-			}
-			motorB.enc1PinState = x4;
-		}
-	}else{
-		//my mode isn't specified
-		motorB.encoderMode = 1;//set to default
-	}
-
-	ledG.state = 1;
-	ledG.count = 100;
-}
-
-ISR(PCINT0_vect){
-	uint8_t btnAval = (PINB & (1<<BTN_A))>>BTN_A;
-
-	buttonLogic(&buttonA, btnAval);
-}
-
-ISR(PCINT2_vect){
-	//determine which button triggered the interrupt
-	uint8_t btnBval = (PIND & (1<<BTN_B))>>BTN_B;
-	uint8_t btnCval = (PIND & (1<<BTN_C))>>BTN_C;
-
-	if(buttonB.pinState ^ btnBval){//has it actually changed?
-		buttonLogic(&buttonB, btnBval);
-	}
-	if(buttonC.pinState ^ btnCval){
-		buttonLogic(&buttonC, btnCval);
-	}
-}
-
-ISR(TIMER2_OVF_vect){//period of 21.3333us. use a counter for longer delays
-	static uint8_t motorControlCount = 0;
-	
-	if(motorControlCount < CONTROL_COUNT){//should achieve a period of 64 us
-		motorControlCount++;
-	}else{
-		//set PID flags
-		motorA.pidTimerFlag = 1;
-		motorB.pidTimerFlag = 1;
-		motorControlCount = 0;
-	}
-	
-	if(ledR.count > 0) ledR.count--;
-	else ledR.state = 0;
-	if(ledG.count > 0) ledG.count--;
-	else ledG.state = 0;
-	if(ledB.count > 0) ledB.count--;
-	else ledB.state = 0;
-	
-	if(buttonA.debounceCount > 0) buttonA.debounceCount--;
-	if(buttonB.debounceCount > 0) buttonB.debounceCount--;
-	if(buttonC.debounceCount > 0) buttonC.debounceCount--;
-}
-
-ISR(ADC_vect){//period of 69.3333us for a standard ADC read, 2x longer for first
-	if(vdiv.count > 1){
-		vdiv.count--;//really this is just a counter to get a few readings before actually using the ADC value
-		ADCSRA |= (1<<ADSC);
-	}else if(vdiv.count == 1){
-		vdiv.ready = 1;
-		vdiv.count = 0;
-	}
-	if(csense.count > 1){
-		csense.count--;
-		ADCSRA |= (1<<ADSC);
-	}else if(csense.count == 1){
-		csense.ready = 1;
-		csense.count = 0;
-	}
-}
+//V2.0	ISR(PCINT1_vect){
+//V2.0		//Motor A encoders
+//V2.0		//detect which pin triggered the interrupt
+//V2.0		uint8_t enc1val = (PINC & (1<<MOTOR_A_ENC_1))>>MOTOR_A_ENC_1; //store the current state
+//V2.0		uint8_t enc2val = (PINC & (1<<MOTOR_A_ENC_2))>>MOTOR_A_ENC_2;
+//V2.0		
+//V2.0		if(motorA.encoderMode == 0){
+//V2.0			//single encoder mode, on pin 1
+//V2.0			//uint8_t encdiff = motorA.enc1PinState ^ enc1val;
+//V2.0			if(motorA.enc1PinState ^ enc1val){
+//V2.0				if(motorA.dir == 1){
+//V2.0					motorA.position++;
+//V2.0					motorA.lastDir = 1;
+//V2.0				}else if(motorA.dir == -1){
+//V2.0					motorA.position--;
+//V2.0					motorA.lastDir = -1;
+//V2.0				}else{
+//V2.0					//wheel slip!!
+//V2.0					//probably going to still be rotating in the direction it just was, so use that past value
+//V2.0					if(motorA.lastDir == 1) motorA.position++;
+//V2.0					else if(motorA.lastDir == -1) motorA.position--;
+//V2.0				}
+//V2.0				motorA.enc1PinState = enc1val;
+//V2.0			}//otherwise there was a tick but it wasn't the first channel...
+//V2.0	
+//V2.0		}else if(motorA.encoderMode == 1){
+//V2.0			//standard quadrature
+//V2.0			uint8_t lastEncSum = (motorA.enc1PinState<<1)|(motorA.enc2PinState);
+//V2.0			uint8_t encSum = (enc1val<<1)|(enc2val);
+//V2.0			int8_t effect = mAQuadTable[lastEncSum][encSum];
+//V2.0	
+//V2.0			motorA.position += effect;
+//V2.0	
+//V2.0			motorA.enc1PinState = enc1val;
+//V2.0			motorA.enc2PinState = enc2val;
+//V2.0	
+//V2.0		}else if(motorA.encoderMode == 2){
+//V2.0			//x4 counting (xor'ed both channels)
+//V2.0			uint8_t x4 = enc1val ^ enc2val;
+//V2.0			if(motorA.enc1PinState ^ x4){
+//V2.0				if(motorA.dir == 1){
+//V2.0					motorA.position++;
+//V2.0					motorA.lastDir = 1;
+//V2.0				}else if(motorA.dir == -1){
+//V2.0					motorA.position--;
+//V2.0					motorA.lastDir = -1;
+//V2.0				}else{
+//V2.0					//wheel slip!!
+//V2.0					//probably going to still be rotating in the direction it just was, so use that past value
+//V2.0					if(motorA.lastDir == 1) motorA.position++;
+//V2.0					else if(motorA.lastDir == -1) motorA.position--;
+//V2.0				}
+//V2.0				motorA.enc1PinState = x4;
+//V2.0			}
+//V2.0		}else{
+//V2.0			//my mode isn't specified
+//V2.0			motorA.encoderMode = 1;//set to default
+//V2.0		}
+//V2.0	
+//V2.0		ledG.state = 1;
+//V2.0		ledG.count = 100;
+//V2.0	}
+//V2.0	
+//V2.0	ISR(PCINT3_vect){
+//V2.0		//Motor B encoders
+//V2.0		//detect which pin triggered the interrupt
+//V2.0		uint8_t enc1val = (PINE & (1<<MOTOR_B_ENC_1))>>MOTOR_B_ENC_1; //store the current state
+//V2.0		uint8_t enc2val = (PINE & (1<<MOTOR_B_ENC_2))>>MOTOR_B_ENC_2;
+//V2.0		
+//V2.0		if(motorB.encoderMode == 0){
+//V2.0			//single encoder mode, on pin 1
+//V2.0			//uint8_t encdiff = motorB.enc1PinState ^ enc1val;
+//V2.0			if(motorB.enc1PinState ^ enc1val){
+//V2.0				if(motorB.dir == 1){
+//V2.0					motorB.position++;
+//V2.0					motorB.lastDir = 1;
+//V2.0				}else if(motorB.dir == -1){
+//V2.0					motorB.position--;
+//V2.0					motorB.lastDir = -1;
+//V2.0				}else{
+//V2.0					//wheel slip!!
+//V2.0					//probably going to still be rotating in the direction it just was, so use that past value
+//V2.0					if(motorB.lastDir == 1) motorB.position++;
+//V2.0					else if(motorB.lastDir == -1) motorB.position--;
+//V2.0				}
+//V2.0				motorB.enc1PinState = enc1val;
+//V2.0			}//otherwise there was a tick but it wasn't the first channel...
+//V2.0	
+//V2.0		}else if(motorB.encoderMode == 1){
+//V2.0			//standard quadrature
+//V2.0			uint8_t lastEncSum = (motorB.enc1PinState<<1)|(motorB.enc2PinState);
+//V2.0			uint8_t encSum = (enc1val<<1)|(enc2val);
+//V2.0			int8_t effect = mBQuadTable[lastEncSum][encSum];
+//V2.0	
+//V2.0			motorB.position += effect;
+//V2.0	
+//V2.0			motorB.enc1PinState = enc1val;
+//V2.0			motorB.enc2PinState = enc2val;
+//V2.0	
+//V2.0		}else if(motorB.encoderMode == 2){
+//V2.0			//x4 counting (xor'ed both channels)
+//V2.0			uint8_t x4 = enc1val ^ enc2val;
+//V2.0			if(motorB.enc1PinState ^ x4){
+//V2.0				if(motorB.dir == 1){
+//V2.0					motorB.position++;
+//V2.0					motorB.lastDir = 1;
+//V2.0				}else if(motorB.dir == -1){
+//V2.0					motorB.position--;
+//V2.0					motorB.lastDir = -1;
+//V2.0				}else{
+//V2.0					//wheel slip!!
+//V2.0					//probably going to still be rotating in the direction it just was, so use that past value
+//V2.0					if(motorB.lastDir == 1) motorB.position++;
+//V2.0					else if(motorB.lastDir == -1) motorB.position--;
+//V2.0				}
+//V2.0				motorB.enc1PinState = x4;
+//V2.0			}
+//V2.0		}else{
+//V2.0			//my mode isn't specified
+//V2.0			motorB.encoderMode = 1;//set to default
+//V2.0		}
+//V2.0	
+//V2.0		ledG.state = 1;
+//V2.0		ledG.count = 100;
+//V2.0	}
+//V2.0	
+//V2.0	ISR(PCINT0_vect){
+//V2.0		uint8_t btnAval = (PINB & (1<<BTN_A))>>BTN_A;
+//V2.0	
+//V2.0		buttonLogic(&buttonA, btnAval);
+//V2.0	}
+//V2.0	
+//V2.0	ISR(PCINT2_vect){
+//V2.0		//determine which button triggered the interrupt
+//V2.0		uint8_t btnBval = (PIND & (1<<BTN_B))>>BTN_B;
+//V2.0		uint8_t btnCval = (PIND & (1<<BTN_C))>>BTN_C;
+//V2.0	
+//V2.0		if(buttonB.pinState ^ btnBval){//has it actually changed?
+//V2.0			buttonLogic(&buttonB, btnBval);
+//V2.0		}
+//V2.0		if(buttonC.pinState ^ btnCval){
+//V2.0			buttonLogic(&buttonC, btnCval);
+//V2.0		}
+//V2.0	}
+//V2.0	
+//V2.0	ISR(TIMER2_OVF_vect){//period of 21.3333us. use a counter for longer delays
+//V2.0		static uint8_t motorControlCount = 0;
+//V2.0		
+//V2.0		if(motorControlCount < CONTROL_COUNT){//should achieve a period of 64 us
+//V2.0			motorControlCount++;
+//V2.0		}else{
+//V2.0			//set PID flags
+//V2.0			motorA.pidTimerFlag = 1;
+//V2.0			motorB.pidTimerFlag = 1;
+//V2.0			motorControlCount = 0;
+//V2.0		}
+//V2.0		
+//V2.0		if(ledR.count > 0) ledR.count--;
+//V2.0		else ledR.state = 0;
+//V2.0		if(ledG.count > 0) ledG.count--;
+//V2.0		else ledG.state = 0;
+//V2.0		if(ledB.count > 0) ledB.count--;
+//V2.0		else ledB.state = 0;
+//V2.0		
+//V2.0		if(buttonA.debounceCount > 0) buttonA.debounceCount--;
+//V2.0		if(buttonB.debounceCount > 0) buttonB.debounceCount--;
+//V2.0		if(buttonC.debounceCount > 0) buttonC.debounceCount--;
+//V2.0	}
+//V2.0	
+//V2.0	ISR(ADC_vect){//period of 69.3333us for a standard ADC read, 2x longer for first
+//V2.0		if(vdiv.count > 1){
+//V2.0			vdiv.count--;//really this is just a counter to get a few readings before actually using the ADC value
+//V2.0			ADCSRA |= (1<<ADSC);
+//V2.0		}else if(vdiv.count == 1){
+//V2.0			vdiv.ready = 1;
+//V2.0			vdiv.count = 0;
+//V2.0		}
+//V2.0		if(csense.count > 1){
+//V2.0			csense.count--;
+//V2.0			ADCSRA |= (1<<ADSC);
+//V2.0		}else if(csense.count == 1){
+//V2.0			csense.ready = 1;
+//V2.0			csense.count = 0;
+//V2.0		}
+//V2.0	}
+//V2.0	
 
 void buttonLogic(Button *button, uint8_t btnVal){
 	if(button->debounceCount == 0){
@@ -272,16 +291,38 @@ void buttonLogic(Button *button, uint8_t btnVal){
 }
 
 int16_t main(void){
+
+//V2.0 LED TEST
+	DDRC = 0x0C; 	//Output on C3:2
+	DDRD = 0xE0; 	//Output on D7:5	--RGB
+
+	for(uint8_t j = 0; j < 3; j++) {
+		PORTC= 0x00;
+		PORTD= 0xC0;
+		_delay_ms(500);		
+		
+		PORTC= 0x0C;
+		PORTD= 0xE0;
+		_delay_ms(500);		
+	}	
+//V2.0 LEDs all OFF so can be used for debug later on	
 	
 	init_structs();
 	init();
-	init_display();
-	detect_reset();
-	ledB.state = 1;
-	ledB.count = 10000;
-	ledR.state = 1;
-	ledR.count = 10000;
-
+//V2.0	init_display();
+//V2.0	detect_reset();
+//V2.0	ledB.state = 1;
+//V2.0	ledB.count = 10000;
+//V2.0	ledR.state = 1;
+//V2.0	ledR.count = 10000;
+	
+	uart_puts_P("PenguinPi v2.0\n");
+	
+	
+	_delay_ms(1000);	
+	PORTC= 0x04;
+	
+	
 	uint8_t com;
 
 	vdiv.count = ADC_COUNT;
@@ -378,7 +419,7 @@ int16_t main(void){
 		if(servoA.state){
 			if(servoA.setPos < servoA.minRange) servoA.setPos = servoA.minRange;//clip the position to within bounds
 			if(servoA.setPos > servoA.maxRange) servoA.setPos = servoA.maxRange;
-			OCR3A = MAP(servoA.setPos, servoA.minRange, servoA.maxRange, servoA.minPWM, servoA.maxPWM);//bad stuff happens when data types are to small
+//V2.0			OCR3A = MAP(servoA.setPos, servoA.minRange, servoA.maxRange, servoA.minPWM, servoA.maxPWM);//bad stuff happens when data types are to small
 			//debug
 			//sprintf(fstring, "ServoA: %ld deg\n", servoA.setPos);
 			//uart1_puts(fstring);
@@ -391,7 +432,7 @@ int16_t main(void){
 		if(servoB.state){
 			if(servoB.setPos < servoB.minRange) servoB.setPos = servoB.minRange;
 			if(servoB.setPos > servoB.maxRange) servoB.setPos = servoB.maxRange;
-			OCR4A = MAP(servoB.setPos, servoB.minRange, servoB.maxRange, servoB.minPWM, servoB.maxPWM);
+//V2.0			OCR4A = MAP(servoB.setPos, servoB.minRange, servoB.maxRange, servoB.minPWM, servoB.maxPWM);
 		}else{
 			PORTD &= ~(1<<SERVO_B);
 		}
@@ -578,70 +619,73 @@ void init_structs(void){
 }
 
 void init(void){
-	//Power reduction register
-	PRR0 &= ~((1<<PRTWI0)|(1<<PRTIM2)|(1<<PRTIM0)|(1<<PRUSART1)|(1<<PRTIM1)|(1<<PRADC));
+//V2.0		//Power reduction register
+//V2.0		PRR0 &= ~((1<<PRTWI0)|(1<<PRTIM2)|(1<<PRTIM0)|(1<<PRUSART1)|(1<<PRTIM1)|(1<<PRADC));
+//V2.0	
+//V2.0		//Motor Pins
+//V2.0		DDRB |= (1<<MOTOR_A_PWM)|(1<<MOTOR_B_PWM);
+//V2.0		DDRC |= (1<<MOTOR_A_PHA)|(1<<MOTOR_B_PHA);
+//V2.0	
+//V2.0		//Motor PWM
+//V2.0		TCCR1A |= (1<<COM1A1)|(0<<COM1A0)|(1<<COM1B1)|(0<<COM1B0)|(1<<WGM11)|(0<<WGM10); // Non-inverting, 16 bit fast PWM
+//V2.0		TCCR1B |= (1<<WGM13)|(1<<WGM12)|(0<<CS12)|(0<<CS11)|(1<<CS10); // DIV1 prescaler
+//V2.0		ICR1 = 0xFFFF; //set TOP
+//V2.0	
+//V2.0		//Encoders
+//V2.0		DDRC &= ~((1<<MOTOR_A_ENC_1)|(1<<MOTOR_A_ENC_2));
+//V2.0		PORTC |= (1<<MOTOR_A_ENC_1)|(1<<MOTOR_A_ENC_2); //enable internal pull ups
+//V2.0		PCMSK1 = (1<<PCINT10)|(1<<PCINT11);
+//V2.0		PCICR |= (1<<PCIE1);
+//V2.0	
+//V2.0		DDRE &= ~((1<<MOTOR_B_ENC_1)|(1<<MOTOR_B_ENC_2));
+//V2.0		PORTE |= (1<<MOTOR_B_ENC_1)|(1<<MOTOR_B_ENC_2);
+//V2.0		PCMSK3 = (1<<PCINT24)|(1<<PCINT25);
+//V2.0		PCICR |= (1<<PCIE3);
+//V2.0		
+//V2.0		//Servo
+//V2.0		DDRD |= (1<<SERVO_A)|(1<<SERVO_B);
+//V2.0		TCCR3A |= (1<<COM3A1)|(0<<COM3A0)|(1<<WGM31)|(0<<WGM30); // non-inverting, 15 bit resolution fast PWM
+//V2.0		TCCR3B |= (1<<WGM33)|(1<<WGM32)|(0<<CS32)|(1<<CS31)|(0<<CS30); // DIV8 prescaler, TOP 20,000 to run at 50 Hz for 20ms pulse
+//V2.0		ICR3 = 0x7530;
+//V2.0		
+//V2.0		TCCR4A |= (1<<COM4A1)|(0<<COM4A0)|(1<<WGM41)|(0<<WGM40); // non-inverting, 15 bit resolution fast PWM
+//V2.0		TCCR4B |= (1<<WGM43)|(1<<WGM42)|(0<<CS42)|(1<<CS41)|(0<<CS40);	// DIV8 prescaler	
+//V2.0		ICR4 = 0x7530;
+//V2.0	
+//V2.0		//LED's
+//V2.0		TCCR0A |= (1<<COM0A1)|(1<<COM0A0)|(1<<COM0B1)|(1<<COM0B0)|(1<<WGM01)|(1<<WGM00); // inverting, 8 bit fast PWM
+//V2.0		TCCR0B |= (0<<WGM02)|(0<<CS02)|(1<<CS01)|(1<<CS00); // DIV64 prescaler, try and run LED's below 1kHz
+//V2.0		
+//V2.0		TCCR2A |= (0<<COM2A1)|(0<<COM2A0)|(1<<COM2B1)|(1<<COM2B0)|(1<<WGM21)|(1<<WGM20); // inverting, 8 bit fast PWM, Blue is OC2B
+//V2.0		TCCR2B |= (0<<WGM22)|(0<<CS22)|(0<<CS21)|(1<<CS20); //DIV1 prescaler (for control timer)
+//V2.0		
+//V2.0		//Buttons (external pullups)
+//V2.0		DDRB &= ~(1<<BTN_A);
+//V2.0		PCMSK0 |= (1<<PCINT0);
+//V2.0	
+//V2.0		DDRD &= ~(1<<BTN_B);
+//V2.0		PCMSK2 |= (1<<PCINT23);
+//V2.0		
+//V2.0		DDRD &= ~(1<<BTN_C);
+//V2.0		PCMSK2 |= (1<<PCINT20);
+//V2.0		PCICR |= (1<<PCIE0)|(1<<PCIE2);
+//V2.0	
+//V2.0		//Pi Interrupt
+//V2.0		DDRB |= (1<<PB5);
+//V2.0		PORTB |= (1<<PB5);
+//V2.0	
+//V2.0		//8 bit controller timer
+//V2.0		TIMSK2 |= (1<<TOIE2);
+//V2.0	
+//V2.0		//ADC
+//V2.0		ADMUX = (0<<REFS1)|(1<<REFS0)|(0<<MUX3)|(1<<MUX2)|(1<<MUX1)|(0<<MUX0); //AVCC reference voltage with external cap on AREF, multiplex to channel 6
+//V2.0		ADCSRA = (1<<ADEN)|(1<<ADIE)|(1<<ADPS2)|(1<<ADPS1)|(0<<ADPS0);//Enable ADC, enable interrupt, prescaler of 64 (187.5kHz sample rate)
+//V2.0		DIDR0 = (1<<6)|(1<<7);//the iom328pb.h file does not include the ADC6D, 7D defines, and it cannot be saved over. ty atmel
 
-	//Motor Pins
-	DDRB |= (1<<MOTOR_A_PWM)|(1<<MOTOR_B_PWM);
-	DDRC |= (1<<MOTOR_A_PHA)|(1<<MOTOR_B_PHA);
-
-	//Motor PWM
-	TCCR1A |= (1<<COM1A1)|(0<<COM1A0)|(1<<COM1B1)|(0<<COM1B0)|(1<<WGM11)|(0<<WGM10); // Non-inverting, 16 bit fast PWM
-	TCCR1B |= (1<<WGM13)|(1<<WGM12)|(0<<CS12)|(0<<CS11)|(1<<CS10); // DIV1 prescaler
-	ICR1 = 0xFFFF; //set TOP
-
-	//Encoders
-	DDRC &= ~((1<<MOTOR_A_ENC_1)|(1<<MOTOR_A_ENC_2));
-	PORTC |= (1<<MOTOR_A_ENC_1)|(1<<MOTOR_A_ENC_2); //enable internal pull ups
-	PCMSK1 = (1<<PCINT10)|(1<<PCINT11);
-	PCICR |= (1<<PCIE1);
-
-	DDRE &= ~((1<<MOTOR_B_ENC_1)|(1<<MOTOR_B_ENC_2));
-	PORTE |= (1<<MOTOR_B_ENC_1)|(1<<MOTOR_B_ENC_2);
-	PCMSK3 = (1<<PCINT24)|(1<<PCINT25);
-	PCICR |= (1<<PCIE3);
+	//uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(BAUD, F_CPU));
 	
-	//Servo
-	DDRD |= (1<<SERVO_A)|(1<<SERVO_B);
-	TCCR3A |= (1<<COM3A1)|(0<<COM3A0)|(1<<WGM31)|(0<<WGM30); // non-inverting, 15 bit resolution fast PWM
-	TCCR3B |= (1<<WGM33)|(1<<WGM32)|(0<<CS32)|(1<<CS31)|(0<<CS30); // DIV8 prescaler, TOP 20,000 to run at 50 Hz for 20ms pulse
-	ICR3 = 0x7530;
+	uart_init( UART_BAUD_SELECT(BAUD, F_CPU) );
 	
-	TCCR4A |= (1<<COM4A1)|(0<<COM4A0)|(1<<WGM41)|(0<<WGM40); // non-inverting, 15 bit resolution fast PWM
-	TCCR4B |= (1<<WGM43)|(1<<WGM42)|(0<<CS42)|(1<<CS41)|(0<<CS40);	// DIV8 prescaler	
-	ICR4 = 0x7530;
-
-	//LED's
-	TCCR0A |= (1<<COM0A1)|(1<<COM0A0)|(1<<COM0B1)|(1<<COM0B0)|(1<<WGM01)|(1<<WGM00); // inverting, 8 bit fast PWM
-	TCCR0B |= (0<<WGM02)|(0<<CS02)|(1<<CS01)|(1<<CS00); // DIV64 prescaler, try and run LED's below 1kHz
-	
-	TCCR2A |= (0<<COM2A1)|(0<<COM2A0)|(1<<COM2B1)|(1<<COM2B0)|(1<<WGM21)|(1<<WGM20); // inverting, 8 bit fast PWM, Blue is OC2B
-	TCCR2B |= (0<<WGM22)|(0<<CS22)|(0<<CS21)|(1<<CS20); //DIV1 prescaler (for control timer)
-	
-	//Buttons (external pullups)
-	DDRB &= ~(1<<BTN_A);
-	PCMSK0 |= (1<<PCINT0);
-
-	DDRD &= ~(1<<BTN_B);
-	PCMSK2 |= (1<<PCINT23);
-	
-	DDRD &= ~(1<<BTN_C);
-	PCMSK2 |= (1<<PCINT20);
-	PCICR |= (1<<PCIE0)|(1<<PCIE2);
-
-	//Pi Interrupt
-	DDRB |= (1<<PB5);
-	PORTB |= (1<<PB5);
-
-	//8 bit controller timer
-	TIMSK2 |= (1<<TOIE2);
-
-	//ADC
-	ADMUX = (0<<REFS1)|(1<<REFS0)|(0<<MUX3)|(1<<MUX2)|(1<<MUX1)|(0<<MUX0); //AVCC reference voltage with external cap on AREF, multiplex to channel 6
-	ADCSRA = (1<<ADEN)|(1<<ADIE)|(1<<ADPS2)|(1<<ADPS1)|(0<<ADPS0);//Enable ADC, enable interrupt, prescaler of 64 (187.5kHz sample rate)
-	DIDR0 = (1<<6)|(1<<7);//the iom328pb.h file does not include the ADC6D, 7D defines, and it cannot be saved over. ty atmel
-	
-	uart1_init(UART_BAUD_SELECT_DOUBLE_SPEED(BAUD, F_CPU));
 	i2c_init();
 
 	sei();
@@ -682,55 +726,7 @@ uint16_t mapRanges(uint16_t a, uint16_t amin, uint16_t amax, uint16_t omin, uint
 	return ((a-amin)*((omax-omin)/(amax-amin))) + omin; //maps from scale amin->amax to scale omin->omax
 }
 
-void LEDOff(uint8_t led){
-	if(led == 0xFF){
-		DDRD &= ~((1<<LED_R)|(1<<LED_G)|(1<<LED_B));
-		//PORTD |= (1<<LED_R)|(1<<LED_G)|(1<<LED_B);
-	}else{
-		DDRD &= ~(1<<led);
-		//PORTD |= (1<<led);//common anode so high: off
-	}
-}
 
-void LEDOn(uint8_t led){
-	if(led == 0xFF){
-		DDRD |= (1<<LED_R)|(1<<LED_G)|(1<<LED_B);
-		//PORTD &= ~((1<<LED_R)|(1<<LED_G)|(1<<LED_B));
-	}else{
-		DDRD |= (1<<led);
-		//PORTD &= ~(1<<led);//common anode so low: on
-	}
-}
-
-void redLEDPercent(uint8_t percent){
-	percent %= 100;
-	if(percent == 0){
-		LEDOff(LED_R);
-	}else{
-		DDRD |= (1<<LED_R);
-		OCR0A = MAP(percent, 0, 100, 0, RED_MAX);
-	}
-}
-
-void greenLEDPercent(uint8_t percent){
-	percent %= 100;
-	if(percent == 0){
-		LEDOff(LED_G);
-	}else{
-		DDRD |= (1<<LED_G);
-		OCR0B = MAP(percent, 0, 100, 0, GREEN_MAX);
-	}
-}
-
-void blueLEDPercent(uint8_t percent){
-	percent %= 100;
-	if(percent == 0){
-		LEDOff(LED_B);
-	}else{
-		DDRD |= (1<<LED_B);
-		OCR2B = MAP(percent, 0, 100, 0, BLUE_MAX);		
-	}
-}
 
 void update_dd7s(Display *display){//TODO: fix this up
 	uint8_t reg[2]= {0, 0}; // MS, LS digits
@@ -1606,3 +1602,5 @@ int16_t motorPIDControl(int16_t setPoint, Motor *motor){
 	
 	return (int16_t)result;		
 }
+
+
