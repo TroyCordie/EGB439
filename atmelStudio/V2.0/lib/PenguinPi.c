@@ -8,6 +8,17 @@
 #include "PenguinPi.h"
 
 
+int8_t 	mAQuadTable[4][4] = {{ 0, +1, -1,  2},
+							 {-1,  0,  2, +1},
+							 {+1,  2,  0, -1},
+							 { 2, -1, +1,  0}};
+
+int8_t  mBQuadTable[4][4] = {{ 0, -1, +1,  2},
+							 {+1,  0,  2, -1},
+							 {-1,  2,  0, +1},
+							 { 2, +1, -1,  0}};
+
+
 
 void detect_reset(void){
 	//read MCUSR and determine what reset the AVR
@@ -231,10 +242,88 @@ int16_t motorPIDControl(int16_t setPoint, Motor *motor){
 	return (int16_t)result;		
 }
 
+void fn_update_motor_states( Motor *motor, uint8_t enc_1_val, uint8_t enc_2_val ){
+	
+	if( motor->encoderMode == 0 ) {
+		//single encoder mode, on pin 1
+		//uint8_t encdiff = motor->enc1PinState ^ enc_1_val;
+		if( motor->enc1PinState ^ enc_1_val ){
+			if( motor->dir == 1){
+				motor->position++;
+				motor->lastDir = 1;
+			}else if( motor->dir == -1 ){
+				motor->position--;
+				motor->lastDir = -1;
+			}else{
+				//wheel slip!!
+				//probably going to still be rotating in the direction it just was, so use that past value
+				if( motor->lastDir == 1 ) 		motor->position++;
+				else if( motor->lastDir == -1 )	motor->position--;
+			}
+			motor->enc1PinState = enc_1_val;
+		}//otherwise there was a tick but it wasn't the first channel...	
+	}
+	else if(motor->encoderMode == 1){
+		//standard quadrature
+		uint8_t lastEncSum 	= (motor->enc1PinState<<1)|(motor->enc2PinState);
+		uint8_t encSum 		= (enc_1_val<<1)|(enc_2_val);
+		int8_t  effect;
+		
+		if ( motor->which_motor == 1 ) {
+			//Motor B
+			effect 			= mBQuadTable[lastEncSum][encSum];
+		}
+		else {
+			//Motor A
+			effect 			= mAQuadTable[lastEncSum][encSum];
+		}
+		
+		motor->position 	+= effect;
+	
+		motor->enc1PinState = enc_1_val;
+		motor->enc2PinState = enc_2_val;
+	
+	}
+	else if(motor->encoderMode == 2){
+		//x4 counting (xor'ed both channels)
+		uint8_t x4 = enc_1_val ^ enc_2_val;
+		if(motor->enc1PinState ^ x4){
+			if(motor->dir == 1){
+				motor->position++;
+				motor->lastDir = 1;
+			}else if(motor->dir == -1){
+				motor->position--;
+				motor->lastDir = -1;
+			}else{
+				//wheel slip!!
+				//probably going to still be rotating in the direction it just was, so use that past value
+				if(motor->lastDir == 1) 		motor->position++;
+				else if(motor->lastDir == -1) 	motor->position--;
+			}
+			motor->enc1PinState = x4;
+		}
+	}
+	else{
+		//my mode isn't specified
+		motor->encoderMode = 1;//set to default
+	}	
+}
 
-
-
-
+void fn_dbg_motor ( Motor *motor ){
+	char 	fstring[32];
+	
+	if ( motor->dir == -1 ) 	uart_puts_P("  dir: -1\n");
+	else if ( motor->dir == 1 )	uart_puts_P("  dir:  1\n");
+	else 						uart_puts_P("  dir:  0\n");					
+	
+	sprintf(fstring, "  enc: %6d\n", motor->position);
+	uart_puts(fstring);
+	sprintf(fstring, "  deg: %6d\n", motor->degrees);
+	uart_puts(fstring);			
+	sprintf(fstring, "  dps: %6d\n", motor->setSpeedDPS);
+	uart_puts(fstring);		
+	
+}
 
 
 

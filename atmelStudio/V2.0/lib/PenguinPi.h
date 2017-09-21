@@ -11,70 +11,77 @@
 
 //Structs
 typedef struct {
-	volatile uint8_t enc1PinState;
-	volatile uint8_t enc2PinState;
-	volatile int16_t position;  // the "encoder" value
-	int8_t encoderMode;//mode 0: single encoder, mode 1: quadrature, mode 2: x4 counting (xor quadrature)
+	volatile uint8_t 	enc1PinState;
+	volatile uint8_t 	enc2PinState;
+	volatile int16_t 	position;  			// the "encoder" value
+	int8_t 			 	encoderMode;		// mode 0: single encoder, mode 1: quadrature, mode 2: x4 counting (xor quadrature)
 	
-	int16_t speedDPS;
-	int16_t degrees;
+	int16_t 			speedDPS;
+	int16_t 			degrees;
 	
-	int8_t dir;
-	int8_t lastDir;
-	int16_t setSpeedDPS;
-	int16_t setDegrees;
+	int8_t				which_motor;		// 0 for MotorA, 1 for MotorB, so different quadrature maps can be used when encoder changes.
+	int8_t  			dir;
+	int8_t  			lastDir;
+	int16_t 			setSpeedDPS;
+	int16_t 			setDegrees;
 	
-	volatile uint8_t pidTimerFlag;
-	int16_t gainP;
-	int16_t gainI;
-	int16_t gainD;
-	int32_t errorSum;
-	int16_t lastVal;
-	int16_t maxError;
-	int32_t maxErrorSum;
-    int8_t  controlMode; // 0=set speed mode, 1=PID control mode
+	volatile uint8_t 	pidTimerFlag;
+	int16_t 			gainP;
+	int16_t 			gainI;
+	int16_t 			gainD;
+	int32_t 			errorSum;
+	int16_t 			lastVal;
+	int16_t 			maxError;
+	int32_t 			maxErrorSum;
+    int8_t  			controlMode; 		// 0=set speed mode, 1=PID control mode
 } Motor;
 
 typedef struct {
-	uint8_t state;
-	int32_t setPos;//measured in degrees
-	int32_t minRange;
-	int32_t maxRange;
-	uint16_t minPWM;
-	uint16_t maxPWM;
+	uint8_t 			state;
+	int32_t 			setPos;				// measured in degrees
+	int32_t 			minRange;
+	int32_t 			maxRange;
+	uint16_t 			minPWM;
+	uint16_t 			maxPWM;
 } Servo;
 
 typedef struct {
-	volatile int8_t state; //1 on, 0 off
-	int16_t brightness;
-	volatile uint16_t count; //multiple of 32 us
+	volatile int8_t 	state; 				// 1 on, 0 off
+	int16_t 			brightness;
+	volatile uint16_t 	count; 				// multiple of 32 us
 } LED;
 
 typedef struct {
-	int8_t address;//TWI address
-	int8_t draw;
-	uint8_t value;
-	int8_t digit0;//if digit 0 or 1 are not -1, then .value is overridden
-	int8_t digit1;
-    int8_t mode;  // 0 is hex, 1 is unsigned decimal, 2 is signed decimal
+	int8_t 				address;			// TWI address
+	int8_t 				draw;
+	uint8_t 			value;
+	int8_t 				digit0;				// if digit 0 or 1 are not -1, then .value is overridden
+	int8_t 				digit1;
+    int8_t 				mode;  				// 0 is hex, 1 is unsigned decimal, 2 is signed decimal
 } Display;
 
 typedef struct {
-	volatile uint8_t pinState;
-	volatile uint8_t state;
-	uint8_t pinMode;//mode 0: state is toggled on both edges. mode 1: state is toggled on falling edges (only changes on depression)
-	uint8_t programMode;//mode 0: state is cleared after update code is run. mode 1: state is maintained after update (continuously updates)
-	volatile int16_t debounceCount;
+	volatile uint8_t 	pinState;
+	volatile uint8_t 	state;
+	uint8_t 			pinMode;			// mode 0: state is toggled on both edges. mode 1: state is toggled on falling edges (only changes on depression)
+	uint8_t 			programMode;		// mode 0: state is cleared after update code is run. mode 1: state is maintained after update (continuously updates)
+	volatile int16_t 	debounceCount;
 } Button;
 
 typedef struct {
-	int16_t raw;
-	float value;
-	float scale;
+	int16_t 			raw;
+	float 				value;
+	float 				scale;
 
-	volatile uint8_t count;
-	volatile uint8_t ready;
+	volatile uint8_t 	count;
+	volatile uint8_t 	ready;
 } AnalogIn;
+
+struct Battery {
+	float cutoff;//volts
+	uint16_t count;
+	uint16_t limit;//number of cycles until it triggers a shutdown
+} battery;
 
 
 union {
@@ -89,6 +96,11 @@ union dgramMem {
 	int16_t in;
 	float fl;
 } dgrammem;
+
+
+
+
+
 
 //function prototypes
 void init_structs(void);
@@ -118,7 +130,9 @@ void parseButtonOp(uint8_t *datagram, Button *btn);
 void parseADCOp(uint8_t *datagram, AnalogIn *adc);
 void parseAllOp(uint8_t *datagram);
 
-int16_t motorPIDControl(int16_t setPoint, Motor *motor);
+int16_t motorPIDControl			( int16_t setPoint, Motor *motor );
+void 	fn_update_motor_states  ( Motor *motor, uint8_t enc_1_val, uint8_t enc_2_val );
+void 	fn_dbg_motor			( Motor *motor );
 
 void LEDOff(uint8_t led);
 void LEDOn(uint8_t led);
@@ -205,9 +219,9 @@ void buttonLogic(Button *button, uint8_t btnVal);
 //#define LITTLE_ENDIAN
 #define BIG_ENDIAN //NETWORK BYTE ORDER
 
-#define DGRAM_MAX_LENGTH 10 //bytes
-#define UART_INTERBYTE_WAIT 80 //us
-#define CRC_8_POLY 0xAE //generator polynomial
+#define DGRAM_MAX_LENGTH 10 	//bytes
+#define UART_INTERBYTE_WAIT 80 	//us
+#define CRC_8_POLY 0xAE 		//generator polynomial
 
 //device addresses
 #define AD_MOTORS 0x01

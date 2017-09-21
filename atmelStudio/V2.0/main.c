@@ -37,216 +37,49 @@
 
 Motor 		motorA;
 Motor 		motorB;
-//Servo 		servoA;			//DO WE NEED THESE
-//Servo 		servoB;			//DO WE NEED THESE
 LED 		ledR;
 LED 		ledG;
 LED 		ledB;
 Display 	displayA;
-Button 		buttonA;
-Button 		buttonB;
-Button 		buttonC;
+//Button 		buttonA;	-- No connected buttons to AVR, all on I2C
+//Button 		buttonB;	-- No connected buttons to AVR, all on I2C
+//Button 		buttonC;	-- No connected buttons to AVR, all on I2C
 AnalogIn 	vdiv;
 AnalogIn 	csense;
+
+
 
 //Global variables
 char 	fstring[32];
 uint8_t datagramG[DGRAM_MAX_LENGTH+1];
-int8_t 	mAQuadTable[4][4] = {{ 0, +1, -1,  2},
-							{-1,  0,  2, +1},
-							{+1,  2,  0, -1},
-							{ 2, -1, +1,  0}};
-
-int8_t mBQuadTable[4][4] = {{ 0, -1, +1,  2},
-							{+1,  0,  2, -1},
-							{-1,  2,  0, +1},
-							{ 2, +1, -1,  0}};
-//digit strings for display: includes hexadecimal only
-uint8_t digit0[] = {DIGIT0_0, DIGIT0_1, DIGIT0_2, DIGIT0_3, DIGIT0_4, DIGIT0_5, DIGIT0_6, DIGIT0_7, DIGIT0_8, DIGIT0_9, DIGIT0_A, DIGIT0_B, DIGIT0_C, DIGIT0_D, DIGIT0_E, DIGIT0_F};
-uint8_t digit1[] = {DIGIT1_0, DIGIT1_1, DIGIT1_2, DIGIT1_3, DIGIT1_4, DIGIT1_5, DIGIT1_6, DIGIT1_7, DIGIT1_8, DIGIT1_9, DIGIT1_A, DIGIT1_B, DIGIT1_C, DIGIT1_D, DIGIT1_E, DIGIT1_F};
-//Battery struct
-struct Battery {
-	float cutoff;//volts
-	uint16_t count;
-	uint16_t limit;//number of cycles until it triggers a shutdown
-} battery;
 
 
 
+//#################################################################################################
+//
+// ISRs
+//
+//#################################################################################################
 
+ISR(PCINT0_vect) {
+	//All encoders are now on one PCINT vector
+	//Externally on PCINT{3:0}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//V2.0	ISR(PCINT1_vect){
-//V2.0		//Motor A encoders
-//V2.0		//detect which pin triggered the interrupt
-//V2.0		uint8_t enc1val = (PINC & (1<<MOTOR_A_ENC_1))>>MOTOR_A_ENC_1; //store the current state
-//V2.0		uint8_t enc2val = (PINC & (1<<MOTOR_A_ENC_2))>>MOTOR_A_ENC_2;
-//V2.0		
-//V2.0		if(motorA.encoderMode == 0){
-//V2.0			//single encoder mode, on pin 1
-//V2.0			//uint8_t encdiff = motorA.enc1PinState ^ enc1val;
-//V2.0			if(motorA.enc1PinState ^ enc1val){
-//V2.0				if(motorA.dir == 1){
-//V2.0					motorA.position++;
-//V2.0					motorA.lastDir = 1;
-//V2.0				}else if(motorA.dir == -1){
-//V2.0					motorA.position--;
-//V2.0					motorA.lastDir = -1;
-//V2.0				}else{
-//V2.0					//wheel slip!!
-//V2.0					//probably going to still be rotating in the direction it just was, so use that past value
-//V2.0					if(motorA.lastDir == 1) motorA.position++;
-//V2.0					else if(motorA.lastDir == -1) motorA.position--;
-//V2.0				}
-//V2.0				motorA.enc1PinState = enc1val;
-//V2.0			}//otherwise there was a tick but it wasn't the first channel...
-//V2.0	
-//V2.0		}else if(motorA.encoderMode == 1){
-//V2.0			//standard quadrature
-//V2.0			uint8_t lastEncSum = (motorA.enc1PinState<<1)|(motorA.enc2PinState);
-//V2.0			uint8_t encSum = (enc1val<<1)|(enc2val);
-//V2.0			int8_t effect = mAQuadTable[lastEncSum][encSum];
-//V2.0	
-//V2.0			motorA.position += effect;
-//V2.0	
-//V2.0			motorA.enc1PinState = enc1val;
-//V2.0			motorA.enc2PinState = enc2val;
-//V2.0	
-//V2.0		}else if(motorA.encoderMode == 2){
-//V2.0			//x4 counting (xor'ed both channels)
-//V2.0			uint8_t x4 = enc1val ^ enc2val;
-//V2.0			if(motorA.enc1PinState ^ x4){
-//V2.0				if(motorA.dir == 1){
-//V2.0					motorA.position++;
-//V2.0					motorA.lastDir = 1;
-//V2.0				}else if(motorA.dir == -1){
-//V2.0					motorA.position--;
-//V2.0					motorA.lastDir = -1;
-//V2.0				}else{
-//V2.0					//wheel slip!!
-//V2.0					//probably going to still be rotating in the direction it just was, so use that past value
-//V2.0					if(motorA.lastDir == 1) motorA.position++;
-//V2.0					else if(motorA.lastDir == -1) motorA.position--;
-//V2.0				}
-//V2.0				motorA.enc1PinState = x4;
-//V2.0			}
-//V2.0		}else{
-//V2.0			//my mode isn't specified
-//V2.0			motorA.encoderMode = 1;//set to default
-//V2.0		}
-//V2.0	
-//V2.0		ledG.state = 1;
-//V2.0		ledG.count = 100;
-//V2.0	}
-//V2.0	
-//V2.0	ISR(PCINT3_vect){
-//V2.0		//Motor B encoders
-//V2.0		//detect which pin triggered the interrupt
-//V2.0		uint8_t enc1val = (PINE & (1<<MOTOR_B_ENC_1))>>MOTOR_B_ENC_1; //store the current state
-//V2.0		uint8_t enc2val = (PINE & (1<<MOTOR_B_ENC_2))>>MOTOR_B_ENC_2;
-//V2.0		
-//V2.0		if(motorB.encoderMode == 0){
-//V2.0			//single encoder mode, on pin 1
-//V2.0			//uint8_t encdiff = motorB.enc1PinState ^ enc1val;
-//V2.0			if(motorB.enc1PinState ^ enc1val){
-//V2.0				if(motorB.dir == 1){
-//V2.0					motorB.position++;
-//V2.0					motorB.lastDir = 1;
-//V2.0				}else if(motorB.dir == -1){
-//V2.0					motorB.position--;
-//V2.0					motorB.lastDir = -1;
-//V2.0				}else{
-//V2.0					//wheel slip!!
-//V2.0					//probably going to still be rotating in the direction it just was, so use that past value
-//V2.0					if(motorB.lastDir == 1) motorB.position++;
-//V2.0					else if(motorB.lastDir == -1) motorB.position--;
-//V2.0				}
-//V2.0				motorB.enc1PinState = enc1val;
-//V2.0			}//otherwise there was a tick but it wasn't the first channel...
-//V2.0	
-//V2.0		}else if(motorB.encoderMode == 1){
-//V2.0			//standard quadrature
-//V2.0			uint8_t lastEncSum = (motorB.enc1PinState<<1)|(motorB.enc2PinState);
-//V2.0			uint8_t encSum = (enc1val<<1)|(enc2val);
-//V2.0			int8_t effect = mBQuadTable[lastEncSum][encSum];
-//V2.0	
-//V2.0			motorB.position += effect;
-//V2.0	
-//V2.0			motorB.enc1PinState = enc1val;
-//V2.0			motorB.enc2PinState = enc2val;
-//V2.0	
-//V2.0		}else if(motorB.encoderMode == 2){
-//V2.0			//x4 counting (xor'ed both channels)
-//V2.0			uint8_t x4 = enc1val ^ enc2val;
-//V2.0			if(motorB.enc1PinState ^ x4){
-//V2.0				if(motorB.dir == 1){
-//V2.0					motorB.position++;
-//V2.0					motorB.lastDir = 1;
-//V2.0				}else if(motorB.dir == -1){
-//V2.0					motorB.position--;
-//V2.0					motorB.lastDir = -1;
-//V2.0				}else{
-//V2.0					//wheel slip!!
-//V2.0					//probably going to still be rotating in the direction it just was, so use that past value
-//V2.0					if(motorB.lastDir == 1) motorB.position++;
-//V2.0					else if(motorB.lastDir == -1) motorB.position--;
-//V2.0				}
-//V2.0				motorB.enc1PinState = x4;
-//V2.0			}
-//V2.0		}else{
-//V2.0			//my mode isn't specified
-//V2.0			motorB.encoderMode = 1;//set to default
-//V2.0		}
-//V2.0	
-//V2.0		ledG.state = 1;
-//V2.0		ledG.count = 100;
-//V2.0	}
-//V2.0	
-//V2.0	ISR(PCINT0_vect){
-//V2.0		uint8_t btnAval = (PINB & (1<<BTN_A))>>BTN_A;
-//V2.0	
-//V2.0		buttonLogic(&buttonA, btnAval);
-//V2.0	}
-//V2.0	
-//V2.0	ISR(PCINT2_vect){
-//V2.0		//determine which button triggered the interrupt
-//V2.0		uint8_t btnBval = (PIND & (1<<BTN_B))>>BTN_B;
-//V2.0		uint8_t btnCval = (PIND & (1<<BTN_C))>>BTN_C;
-//V2.0	
-//V2.0		if(buttonB.pinState ^ btnBval){//has it actually changed?
-//V2.0			buttonLogic(&buttonB, btnBval);
-//V2.0		}
-//V2.0		if(buttonC.pinState ^ btnCval){
-//V2.0			buttonLogic(&buttonC, btnCval);
-//V2.0		}
-//V2.0	}
+	//detect which pin triggered the interrupt
+		uint8_t PINC_val   = PINC;
+		uint8_t enc_a1_val = ( PINC_val & (1<<MOTOR_A_ENC_1) )>>MOTOR_A_ENC_1; 	//store the current state
+		uint8_t enc_a2_val = ( PINC_val & (1<<MOTOR_A_ENC_2) )>>MOTOR_A_ENC_2;
+		uint8_t enc_b1_val = ( PINC_val & (1<<MOTOR_B_ENC_1) )>>MOTOR_B_ENC_1; 	//store the current state
+		uint8_t enc_b2_val = ( PINC_val & (1<<MOTOR_B_ENC_2) )>>MOTOR_B_ENC_2;
+		
+	//Update Motor states
+		fn_update_motor_states( &motorA, enc_a1_val, enc_a2_val ); 
+		fn_update_motor_states( &motorB, enc_b1_val, enc_b2_val ); 
+	
+	//Update LEDs
+		ledG.state = 1;
+		ledG.count = 100;
+}
 
 ISR(TIMER2_OVF_vect){							//period of 21.3333us. use a counter for longer delays
 	static uint8_t motorControlCount = 0;
@@ -269,10 +102,6 @@ ISR(TIMER2_OVF_vect){							//period of 21.3333us. use a counter for longer dela
 	
 	if(ledB.count > 0) 	ledB.count--;
 	else 				ledB.state = 0;
-	
-//DELETE	if(buttonA.debounceCount > 0) buttonA.debounceCount--;
-//DELETE	if(buttonB.debounceCount > 0) buttonB.debounceCount--;
-//DELETE	if(buttonC.debounceCount > 0) buttonC.debounceCount--;
 }
 
 ISR(ADC_vect) {								//period of 69.3333us for a standard ADC read, 2x longer for first
@@ -295,61 +124,41 @@ ISR(ADC_vect) {								//period of 69.3333us for a standard ADC read, 2x longer 
 }
 
 
-
-
+//#################################################################################################
+//
+// INITs
+//
+//#################################################################################################
 
 void init_structs(void){
-	float kP = 70.0;
-	float kI = 0.0075;
-	float kD = 2.0;
+	float kP 			= 70.0;
+	float kI 			= 0.0075;
+	float kD 			= 2.0;
 
-	motorA.gainP = kP*PID_SCALE;
-	motorA.gainI = kI*PID_SCALE;
-	motorA.gainD = kD*PID_SCALE;
-	motorA.maxError = INT16_MAX / (motorA.gainP + 1);
-	motorA.maxErrorSum = (INT32_MAX / 2) / (motorA.gainI + 1);
-	motorA.encoderMode = 1;
+	motorA.which_motor	= 0;
+	motorA.gainP 		= kP*PID_SCALE;
+	motorA.gainI 		= kI*PID_SCALE;
+	motorA.gainD 		= kD*PID_SCALE;
+	motorA.maxError 	= INT16_MAX / (motorA.gainP + 1);
+	motorA.maxErrorSum 	= (INT32_MAX / 2) / (motorA.gainI + 1);
+	motorA.encoderMode 	= 1;
 
-	motorB.gainP = kP*PID_SCALE;
-	motorB.gainI = kI*PID_SCALE;
-	motorB.gainD = kD*PID_SCALE;
-	motorB.maxError = INT16_MAX / (motorB.gainP + 1);
-	motorB.maxErrorSum = (INT32_MAX / 2) / (motorB.gainI + 1);
-	motorB.encoderMode = 1;
+	motorB.which_motor	= 1;
+	motorB.gainP 		= kP*PID_SCALE;
+	motorB.gainI 		= kI*PID_SCALE;
+	motorB.gainD 		= kD*PID_SCALE;
+	motorB.maxError 	= INT16_MAX / (motorB.gainP + 1);
+	motorB.maxErrorSum 	= (INT32_MAX / 2) / (motorB.gainI + 1);
+	motorB.encoderMode 	= 1;
 
-//DELETE	servoA.setPos = 90;
-//DELETE	servoA.minRange = 0;
-//DELETE	servoA.maxRange= 180;
-//DELETE	servoA.minPWM = SERVO_PWM_RANGE_MIN;
-//DELETE	servoA.maxPWM = SERVO_PWM_RANGE_MAX;
+	vdiv.count 			= 0;
+	vdiv.scale 			= 16.018497;//mV per div
+	csense.count 		= 0;
+	csense.scale 		= 3.2226562;//mA per div
 
-//DELETE	servoB.setPos= 90;
-//DELETE	servoB.minRange = 0;
-//DELETE	servoB.maxRange= 180;
-//DELETE	servoB.minPWM = SERVO_PWM_RANGE_MIN;
-//DELETE	servoB.maxPWM = SERVO_PWM_RANGE_MAX;
-
-	displayA.address = PCA6416A_0;
-	displayA.value= 0;
-	displayA.digit0 = 0;
-	displayA.digit1 = 0;
-	displayA.draw = 0;
-
-	buttonA.pinMode = 0;
-	buttonB.pinMode = 0;
-	buttonC.pinMode = 0;
-	buttonA.programMode = 0;
-	buttonB.programMode = 0;
-	buttonC.programMode = 0;
-
-	vdiv.count = 0;
-	vdiv.scale = 16.018497;//mV per div
-	csense.count = 0;
-	csense.scale = 3.2226562;//mA per div
-
-	battery.cutoff = 6.5;
-	battery.count= 0;
-	battery.limit = 5000;//about 1.5 seconds
+	battery.cutoff 		= 6.5;
+	battery.count		= 0;
+	battery.limit 		= 5000;//about 1.5 seconds
 }
 
 void init(void){
@@ -363,9 +172,13 @@ void init(void){
 	//Motor PWM
 		//V1 was OC1A and OC1B
 		//V2  is OC0A and OC0B
-		TCCR0A |= (1<<COM1A1)|(0<<COM1A0)|(1<<COM1B1)|(0<<COM1B0)|(1<<WGM11)|(0<<WGM10); 	// Non-inverting, 16 bit fast PWM
-		TCCR0B |= (1<<WGM13)|(1<<WGM12)|(0<<CS12)|(0<<CS11)|(1<<CS10); 						// DIV1 prescaler
-		ICR1 	= 0xFFFF; 																	//set TOP
+		TCCR0A |= (1<<COM0A1)|(0<<COM0A0)|			// Clear OC0A on Compare Match	Set OC0A on Bottom
+				  (1<<COM0B1)|(0<<COM0B0)|			// Clear OC0B on Compare Match	Set OC0B on Bottom
+				  (1<<WGM01) |(1<<WGM00); 			// Non-inverting, 8 bit fast PWM
+				  
+		TCCR0B |= (0<<WGM02) |
+				  (0<<CS02)|(0<<CS01)|(1<<CS00);	// DIV1 prescaler
+
 
 	//Encoders
 		//V1 was PC2, PC3, PE0, PE1 ... PCINT 10,11,24,25
@@ -374,48 +187,23 @@ void init(void){
 		PORTA 	|=   (1<<MOTOR_A_ENC_1)|(1<<MOTOR_A_ENC_2)|(1<<MOTOR_B_ENC_1)|(1<<MOTOR_B_ENC_2);		//Enable internal PULLUPs
 		PCMSK0   =   (1<<PCINT0)|(1<<PCINT1)|(1<<PCINT2)|(1<<PCINT3);									//Enable Pin Change Mask
 		PCICR 	|=   (1<<PCIE0);																		//Enable interrupt on pin change
-		
-//DELETE	//Servo
-//DELETE	DDRD |= (1<<SERVO_A)|(1<<SERVO_B);
-//DELETE	TCCR3A |= (1<<COM3A1)|(0<<COM3A0)|(1<<WGM31)|(0<<WGM30); // non-inverting, 15 bit resolution fast PWM
-//DELETE	TCCR3B |= (1<<WGM33)|(1<<WGM32)|(0<<CS32)|(1<<CS31)|(0<<CS30); // DIV8 prescaler, TOP 20,000 to run at 50 Hz for 20ms pulse
-//DELETE	ICR3 = 0x7530;
-
-//DELETE	TCCR4A |= (1<<COM4A1)|(0<<COM4A0)|(1<<WGM41)|(0<<WGM40); // non-inverting, 15 bit resolution fast PWM
-//DELETE	TCCR4B |= (1<<WGM43)|(1<<WGM42)|(0<<CS42)|(1<<CS41)|(0<<CS40);	// DIV8 prescaler	
-//DELETE	ICR4 = 0x7530;
-	
+			
 	//LED's
 		DDRC |= 0x0C;	//LEDs on C3:2
 		DDRD |= 0xE0;	//RGB on D7:5
 	
 	
-	//LEDR	was OC0A	now OC2A
-	//LEDG	was OC0B	now OC1A
-	//LEDB	was OC2B	now OC2B
+		//LEDR	was OC0A	now OC2A
+		//LEDG	was OC0B	now OC1A
+		//LEDB	was OC2B	now OC2B
 	
-	//GREEN ON A
-		TCCR1A |= (1<<COM0A1)|(1<<COM0A0)|(0<<COM0B1)|(0<<COM0B0)|(1<<WGM01)|(1<<WGM00); 			// inverting, 8 bit fast PWM
-		TCCR1B |= (0<<WGM02)|(0<<CS02)|(0<<CS01)|(1<<CS00);
+		//GREEN ON A
+			TCCR1A |= (1<<COM0A1)|(1<<COM0A0)|(0<<COM0B1)|(0<<COM0B0)|(1<<WGM01)|(1<<WGM00); 			// inverting, 8 bit fast PWM
+			TCCR1B |= (0<<WGM02)|(0<<CS02)|(0<<CS01)|(1<<CS00);
 		
-	//RED on A and BLUE on B
-		TCCR2A |= (1<<COM2A1)|(1<<COM2A0)|(1<<COM2B1)|(1<<COM2B0)|(1<<WGM21)|(1<<WGM20); 			// inverting, 8 bit fast PWM
-		TCCR2B |= (0<<WGM22)|(0<<CS22)|(0<<CS21)|(1<<CS20);
-		
-//V2.0		//Buttons (external pullups)
-//V2.0		DDRB &= ~(1<<BTN_A);
-//V2.0		PCMSK0 |= (1<<PCINT0);
-//V2.0	
-//V2.0		DDRD &= ~(1<<BTN_B);
-//V2.0		PCMSK2 |= (1<<PCINT23);
-//V2.0		
-//V2.0		DDRD &= ~(1<<BTN_C);
-//V2.0		PCMSK2 |= (1<<PCINT20);
-//V2.0		PCICR |= (1<<PCIE0)|(1<<PCIE2);
-//V2.0	
-//V2.0		//Pi Interrupt
-//V2.0		DDRB |= (1<<PB5);
-//V2.0		PORTB |= (1<<PB5);
+		//RED on A and BLUE on B
+			TCCR2A |= (1<<COM2A1)|(1<<COM2A0)|(1<<COM2B1)|(1<<COM2B0)|(1<<WGM21)|(1<<WGM20); 			// inverting, 8 bit fast PWM
+			TCCR2B |= (0<<WGM22)|(0<<CS22)|(0<<CS21)|(1<<CS20);
 
 	//8 bit controller timer
 		TIMSK2 |= (1<<TOIE2);
@@ -424,22 +212,23 @@ void init(void){
 		DIDR0	= (1<<ADC6D)|(1<<ADC7D);
 		ADMUX 	= (0<<REFS1)|(1<<REFS0)|(0<<MUX4)|(0<<MUX3)|(1<<MUX2)|(1<<MUX1)|(0<<MUX0); 	//AVCC reference voltage with external cap on AREF, multiplex to channel 6
 		ADCSRA 	= (1<<ADEN) |(1<<ADIE) |(1<<ADPS2)|(1<<ADPS1)|(0<<ADPS0);					//Enable ADC, enable interrupt, prescaler of 64 (187.5kHz sample rate)
-//This access at mo puts device into a loop cycle												
 
-	uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(BAUD, F_CPU));
+	//UART
+		uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(BAUD, F_CPU));
 	
-	i2c_init();
+	//I2C
+		i2c_init();
 
-	sei();
+	//Enable Interrupts
+		sei();
 }
 
 
-
-
-
-
-
-
+//#################################################################################################
+//
+// Message Parsing
+//
+//#################################################################################################
 
 uint8_t checkBuffer(void){
 	uint16_t com = uart_getc();
@@ -577,15 +366,15 @@ void parseDatagram(uint8_t *datagram){
 			parseDisplayOp(datagram, &displayA);
 		break;
 
-		case AD_BTN_A:
-			parseButtonOp(datagram, &buttonA);
-		break;
-		case AD_BTN_B:
-			parseButtonOp(datagram, &buttonB);
-		break;
-		case AD_BTN_C:
-			parseButtonOp(datagram, &buttonC);
-		break;
+//DELETE		case AD_BTN_A:
+//DELETE			parseButtonOp(datagram, &buttonA);
+//DELETE		break;
+//DELETE		case AD_BTN_B:
+//DELETE			parseButtonOp(datagram, &buttonB);
+//DELETE		break;
+//DELETE		case AD_BTN_C:
+//DELETE			parseButtonOp(datagram, &buttonC);
+//DELETE		break;
 
 		case AD_ADC_V:
 			parseADCOp(datagram, &vdiv);
@@ -773,7 +562,7 @@ void parseMotorOp(uint8_t *datagram, Motor *motor){
 	}
 }
 
-void parseLEDOp(uint8_t *datagram, LED *led){
+void parseLEDOp		( uint8_t *datagram, LED *led ){
 	switch(datagram[2]){
 		//SETTERS
 		case LED_SET_STATE:
@@ -829,7 +618,7 @@ void parseLEDOp(uint8_t *datagram, LED *led){
 	}
 }
 
-void parseDisplayOp(uint8_t *datagram, Display *display){
+void parseDisplayOp	( uint8_t *datagram, Display *display ){
 	switch(datagram[2]){
 		//SETTERS
 		case DISPLAY_SET_VALUE:
@@ -901,50 +690,7 @@ void parseDisplayOp(uint8_t *datagram, Display *display){
 	}
 }
 
-void parseButtonOp(uint8_t *datagram, Button *btn){
-	switch(datagram[2]){
-		//SETTERS
-		case BUTTON_SET_PROGRAM_MODE:
-			if(datagram[0] == 4){
-				uint8_t mode = datagram[3];
-				if(mode == 1) btn->programMode = 1;
-				else if(mode == 0) btn->programMode = 0;
-			}else{
-				uart_puts_P("ERROR: Incorrect Type\n");
-			}
-		break;
-		case BUTTON_SET_PIN_MODE:
-			if(datagram[0] == 4){
-				uint8_t mode = datagram[3];
-				if(mode == 1) btn->pinMode = 1;
-				else if(mode == 0) btn->pinMode = 0;
-			}else{
-				uart_puts_P("ERROR: Incorrect Type\n");
-			}
-		break;
-		
-		//GETTERS
-		case BUTTON_GET_PROGRAM_MODE:
-			dgrammem.ch = btn->programMode;
-			formdatagram(datagramG, datagram[1], BUTTON_SET_PROGRAM_MODE, dgrammem, 'c');
-			uartputcs(datagramG);
-		break;
-		case BUTTON_GET_PIN_MODE:
-			dgrammem.ch = btn->pinMode;
-			formdatagram(datagramG, datagram[1], BUTTON_SET_PIN_MODE, dgrammem, 'c');
-			uartputcs(datagramG);
-		break;
-		
-		default:
-			uart_puts_P("ERROR: Unknown OpCode\n");
-			//flash BLUE LED
-			ledB.state = 1;
-			ledB.count = 1000;
-		break;
-	}
-}
-
-void parseADCOp(uint8_t *datagram, AnalogIn *adc){
+void parseADCOp		( uint8_t *datagram, AnalogIn *adc ){
 	switch(datagram[2]){
 		//SETTERS
 		case ADC_SET_SCALE:
@@ -983,7 +729,7 @@ void parseADCOp(uint8_t *datagram, AnalogIn *adc){
 	}
 }
 
-void parseAllOp(uint8_t *datagram){
+void parseAllOp		( uint8_t *datagram ){
 	switch(datagram[2]){
 		case ALL_STOP:
 			motorA.position = 0;
@@ -1008,9 +754,9 @@ void parseAllOp(uint8_t *datagram){
 			ledG = (LED){0};
 			ledB = (LED){0};
 			displayA = (Display){0};
-			buttonA = (Button){0};
-			buttonB = (Button){0};
-			buttonC = (Button){0};
+//DELETE			buttonA = (Button){0};
+//DELETE			buttonB = (Button){0};
+//DELETE			buttonC = (Button){0};
 			vdiv = (AnalogIn){0};
 			csense = (AnalogIn){0};
 		break;
@@ -1070,48 +816,55 @@ int16_t main(void){
 
 	init_structs();
 	init();	
-//DELETE	init_display();
 
 	ledB.state = 1;
 	ledB.count = 10000;
 	ledR.state = 1;
 	ledR.count = 10000;	
 
-
 	uart_puts_P("PenguinPi v2.0\n");
 	
-	detect_reset();
-	
+	detect_reset();	
 //INIT Done	
 	
 
 //TESTS
 	//LEDs
-	for(uint8_t j = 0; j < 3; j++) {
-		PORTC= 0x00;
-		_delay_ms(500);		
-		PORTC= 0x0C;
-		_delay_ms(500);		
-	}
+//	for(uint8_t j = 0; j < 3; j++) {
+//		PORTC= 0x00;
+//		_delay_ms(500);		
+//		PORTC= 0x0C;
+//		_delay_ms(500);		
+//	}
 
 
 	//RGB
-	redLEDPercent(50);	
-	_delay_ms(500);
-	redLEDPercent(100);	
-	_delay_ms(500);
-	redLEDPercent(0);	
-	greenLEDPercent(50);
-	_delay_ms(500);
-	greenLEDPercent(100);
-	_delay_ms(500);	
-	greenLEDPercent(0);
-	blueLEDPercent(50);
-	_delay_ms(500);
-	blueLEDPercent(100);
-	_delay_ms(500);	
-	blueLEDPercent(0);
+//	redLEDPercent(50);	
+//	_delay_ms(500);
+//	redLEDPercent(100);	
+//	_delay_ms(500);
+//	redLEDPercent(0);	
+//	greenLEDPercent(50);
+//	_delay_ms(500);
+//	greenLEDPercent(100);
+//	_delay_ms(500);	
+//	greenLEDPercent(0);
+//	blueLEDPercent(50);
+//	_delay_ms(500);
+//	blueLEDPercent(100);
+//	_delay_ms(500);	
+//	blueLEDPercent(0);
+	
+	//MOTORS	
+//	motorA.dir			=  1;
+//	motorA.setSpeedDPS	= 50;
+	
+//	motorB.dir			= -1;
+//	motorB.setSpeedDPS	= 90;	
+
 //END TESTS
+
+
 	
 	uint8_t com;
 
@@ -1122,19 +875,14 @@ int16_t main(void){
     {
 		com = checkBuffer();					
 		if(com == STARTBYTE){
-			parseDatagram(datagramG);
+			parseDatagram( datagramG );
 		}
 		//cleanup buffers
 		com = 0;
 		for(uint8_t j = 0; j < DGRAM_MAX_LENGTH; j++) datagramG[j] = 0;
 		dgrammem.fl = 0;
 
-		if ( DEBUG==1 ) {
-			sprintf(fstring, "encA: %6d\n", motorA.position);
-			uart_puts(fstring);
-			sprintf(fstring, "encB: %6d\n", motorB.position);
-			uart_puts(fstring);
-		}
+
 
 		motorA.degrees = motorA.position * DEGPERCOUNT;
 		motorB.degrees = motorB.position * DEGPERCOUNT;
@@ -1143,7 +891,7 @@ int16_t main(void){
         /*
          * this is the non-PID code that needs to be run only if motor->controlMode == 0
          */
-		OCR0B = mapRanges(abs(motorA.setSpeedDPS), 0, 100, 0, 0xFFFF);
+		OCR0B = mapRanges( abs(motorA.setSpeedDPS), 0, 100, 0, 255 );
 
 		if(motorA.dir == 1){
 			PORTB |= (1<<MOTOR_A_PHA);
@@ -1153,15 +901,20 @@ int16_t main(void){
 			OCR0B = 0;
 		}
 
-		OCR0A = mapRanges(abs(motorB.setSpeedDPS), 0, 100, 0, 0xFFFF);
+		OCR0A = mapRanges( abs(motorB.setSpeedDPS), 0, 100, 0, 255 );
 
-		if(motorB.dir == 1){
+		if(motorB.dir == 1) {			
 			PORTB &= ~(1<<MOTOR_B_PHA);
-			}else if(motorB.dir == -1){
+		}
+		else if(motorB.dir == -1) {
 			PORTB |= (1<<MOTOR_B_PHA);
-			}else{
+		}
+		else {
 			OCR0A = 0;
 		}
+		
+		
+				
 
         /*
          * this is the PID code that needs to be reinstated if motor->controlMode == 1
@@ -1205,105 +958,25 @@ int16_t main(void){
 			}
 			motorB.pidTimerFlag = 0;
 		}*/
-		
-//DELETE		//Servo update
-//DELETE		if(servoA.state){
-//DELETE			if(servoA.setPos < servoA.minRange) servoA.setPos = servoA.minRange;//clip the position to within bounds
-//DELETE			if(servoA.setPos > servoA.maxRange) servoA.setPos = servoA.maxRange;
-//DELETE				OCR3A = MAP(servoA.setPos, servoA.minRange, servoA.maxRange, servoA.minPWM, servoA.maxPWM);//bad stuff happens when data types are to small
-//DELETE			//debug
-//DELETE			//sprintf(fstring, "ServoA: %ld deg\n", servoA.setPos);
-//DELETE			//uart_puts(fstring);
-//DELETE			//sprintf(fstring, "Mapped: %ld tic\n", MAP(servoA.setPos, servoA.minRange, servoA.maxRange, servoA.minPWM, servoA.maxPWM));
-//DELETE			//uart_puts(fstring);
-//DELETE			//displayA.value = servoA.setPos/10;
-//DELETE		}else{
-//DELETE			PORTD &= ~(1<<SERVO_A);
-//DELETE		}
-//DELETE		if(servoB.state){
-//DELETE			if(servoB.setPos < servoB.minRange) servoB.setPos = servoB.minRange;
-//DELETE			if(servoB.setPos > servoB.maxRange) servoB.setPos = servoB.maxRange;
-//DELETE				OCR4A = MAP(servoB.setPos, servoB.minRange, servoB.maxRange, servoB.minPWM, servoB.maxPWM);
-//DELETE		}else{
-//DELETE			PORTD &= ~(1<<SERVO_B);
-//DELETE		}
-				
-
-//DELETE		//Display update
-//DELETE		if(displayA.draw){
-//DELETE			update_dd7s(&displayA);
-//DELETE			displayA.draw = 0;
-//DELETE		}
-		
+			
 						
 		//LED update
-		if(ledR.state > 0){
-			if(ledR.brightness > 0) redLEDPercent(ledR.brightness);
-			else LEDOn(LED_R);
-		} else LEDOff(LED_R);
-
-		if(ledG.state > 0){
-			if(ledG.brightness > 0) greenLEDPercent(ledG.brightness);
-			else LEDOn(LED_G);
-		} else LEDOff(LED_G);
-
-		if(ledB.state > 0){ 
-			if(ledB.brightness > 0) blueLEDPercent(ledB.brightness);
-			else LEDOn(LED_B);
-		} else LEDOff(LED_B);
+			if(ledR.state > 0) {
+				if(ledR.brightness > 0) redLEDPercent(ledR.brightness);
+				else 					LEDOn(LED_R);
+			} else 						LEDOff(LED_R);
+	
+			if(ledG.state > 0) {
+				if(ledG.brightness > 0) greenLEDPercent(ledG.brightness);
+				else 					LEDOn(LED_G);
+			} else 						LEDOff(LED_G);
+	
+			if(ledB.state > 0) { 
+				if(ledB.brightness > 0) blueLEDPercent(ledB.brightness);
+				else 					LEDOn(LED_B);
+			} else 						LEDOff(LED_B);
 		
 
-		//Button update
-		if(buttonA.state == 1){
-			ledR.state = 1;
-			ledR.count = 2000;
-// 			displayA.value--;
-// 			displayA.draw = 1;
-			
-			uart_puts_P("This is a shutdown request");
-
-			motorA.position = 0;
-			motorA.setDegrees = 180;
-			motorA.dir = -1;
-			motorB.position = 0;
-			motorB.setDegrees = 180;
-			motorB.dir = 1;
-			if(buttonA.programMode == 0) buttonA.state = 0;
-		}else{
-			
-		}
-		if(buttonB.state == 1){
-			ledG.state = 1;
-			ledG.count = 2000;
-// 			displayA.value = 0;
-// 			displayA.draw = 1;
-
-			motorA.position = 0;
-			motorA.setSpeedDPS = motorA.setSpeedDPS +10;
-			motorA.dir = -1;
-			motorB.position = 0;
-			motorB.setDegrees = -180;
-			motorB.dir = -1;
-			if(buttonB.programMode == 0) buttonB.state = 0;
-		}else{
-			
-		}
-		if(buttonC.state == 1){
-			ledB.state = 1;
-			ledB.count = 2000;
-// 			displayA.value++;
-// 			displayA.draw = 1;
-
-			motorA.position = 0;
-			motorA.setSpeedDPS = motorA.setSpeedDPS -10;
-			motorA.dir = 1;
-			motorB.position = 0;
-			motorB.setDegrees = -180;
-			motorB.dir = -1;
-			if(buttonC.programMode == 0) buttonC.state = 0;
-		}else{
-			
-		}
 
 		//Analog update
 		if(vdiv.ready && !(ADCSRA&(1<<ADSC))){
@@ -1315,12 +988,8 @@ int16_t main(void){
 			ADMUX 		|= (1<<MUX0);//change mux
 			csense.count = ADC_COUNT;
 			ADCSRA 		|= (1<<ADSC);//restart
-
-			if ( DEBUG==1 ) {
-				sprintf(fstring, "Voltage: %5.3f V\n", vdiv.value);
-				uart_puts(fstring);
-			}
 		}
+		
 		if(csense.ready && !(ADCSRA&(1<<ADSC))){
 			csense.raw   = ADC;
 			csense.value = csense.raw * csense.scale;
@@ -1330,11 +999,6 @@ int16_t main(void){
 			ADMUX 	  &= ~(1<<MUX0);//change mux
 			vdiv.count = ADC_COUNT;
 			ADCSRA 	  |= (1<<ADSC);//restart
-
-			if ( DEBUG==1 ) {		
-				sprintf(fstring, "Current: %5.3f mA\n", csense.value);
-				uart_puts(fstring);
-			}
 		}
 
 		if(vdiv.value < battery.cutoff){
@@ -1362,6 +1026,28 @@ int16_t main(void){
 			//TOGGLE LED1 : C3
 			PORTC = PORTC ^ 0x04;
 			_delay_ms(100);
+			
+			//to UART
+				//Voltage
+					sprintf(fstring, "Voltage: %5.3f V\n", vdiv.value);
+					uart_puts(fstring);				
+				
+				//Current
+					sprintf(fstring, "Current: %5.3f mA\n", csense.value);
+					uart_puts(fstring);	
+			
+				//Motors
+					uart_puts_P("M:A\n");
+						fn_dbg_motor ( &motorA );					
+					uart_puts_P("M:B\n");
+						fn_dbg_motor ( &motorB );				
+						
+				//Timers
+					sprintf(fstring, "OC MA: %5d\n", OCR0B );	//Motor A on OCR0B
+					uart_puts(fstring);			
+					sprintf(fstring, "OC MB: %5d\n", OCR0A ); 	//Motor B on OCR0A
+					uart_puts(fstring);					
+			
 		}
 		
     }
