@@ -129,6 +129,9 @@ extern unsigned char i2c_start(unsigned char addr);
 extern unsigned char i2c_rep_start(unsigned char addr);
 
 
+//Checks if a device present and ready
+extern int8_t i2c_check_device(unsigned char addr);
+
 /**
  @brief Issues a start condition and sends address and transfer direction 
    
