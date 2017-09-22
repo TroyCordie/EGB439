@@ -16,7 +16,7 @@
 /*
  * cpu is ATmega644PA
  */
-#define DEBUG 1
+#define DEBUG 0
  
 #define BAUD  115200
 #define F_CPU 8000000UL
@@ -41,17 +41,13 @@ LED 		ledR;
 LED 		ledG;
 LED 		ledB;
 Display 	displayA;
-//Button 		buttonA;	-- No connected buttons to AVR, all on I2C
-//Button 		buttonB;	-- No connected buttons to AVR, all on I2C
-//Button 		buttonC;	-- No connected buttons to AVR, all on I2C
 AnalogIn 	vdiv;
 AnalogIn 	csense;
+Hat_s		hat;
 
 
 
-//Global variables
-char 	fstring[32];
-uint8_t datagramG[DGRAM_MAX_LENGTH+1];
+
 
 
 
@@ -63,14 +59,14 @@ uint8_t datagramG[DGRAM_MAX_LENGTH+1];
 
 ISR(PCINT0_vect) {
 	//All encoders are now on one PCINT vector
-	//Externally on PCINT{3:0}
+	//Externally on PCINT{3:0} which is PA3:0
 
 	//detect which pin triggered the interrupt
-		uint8_t PINC_val   = PINC;
-		uint8_t enc_a1_val = ( PINC_val & (1<<MOTOR_A_ENC_1) )>>MOTOR_A_ENC_1; 	//store the current state
-		uint8_t enc_a2_val = ( PINC_val & (1<<MOTOR_A_ENC_2) )>>MOTOR_A_ENC_2;
-		uint8_t enc_b1_val = ( PINC_val & (1<<MOTOR_B_ENC_1) )>>MOTOR_B_ENC_1; 	//store the current state
-		uint8_t enc_b2_val = ( PINC_val & (1<<MOTOR_B_ENC_2) )>>MOTOR_B_ENC_2;
+		uint8_t PINA_val   = PINA;
+		uint8_t enc_a1_val = ( PINA_val & (1<<MOTOR_A_ENC_1) )>>MOTOR_A_ENC_1; 	//store the current state
+		uint8_t enc_a2_val = ( PINA_val & (1<<MOTOR_A_ENC_2) )>>MOTOR_A_ENC_2;
+		uint8_t enc_b1_val = ( PINA_val & (1<<MOTOR_B_ENC_1) )>>MOTOR_B_ENC_1; 	//store the current state
+		uint8_t enc_b2_val = ( PINA_val & (1<<MOTOR_B_ENC_2) )>>MOTOR_B_ENC_2;
 		
 	//Update Motor states
 		fn_update_motor_states( &motorA, enc_a1_val, enc_a2_val ); 
@@ -80,6 +76,24 @@ ISR(PCINT0_vect) {
 		ledG.state = 1;
 		ledG.count = 100;
 }
+
+ISR(PCINT2_vect) {
+	//PCINT2 contains the interrupt from HAT07 on PCINT22 which is PC6
+	
+	uint8_t data_r[2]  = {0, 0};
+	
+	uint8_t PINC_val   = PINC;
+	
+	
+	//Clear Interrupt by reading the device 
+		i2cReadnBytes(data_r, PCA6416A_1, 0x00, 2 );
+	
+	
+	PORTC	= PORTC ^ 0x08;
+
+	uart_puts_P("PCINT2\n");	
+}
+
 
 ISR(TIMER2_OVF_vect){							//period of 21.3333us. use a counter for longer delays
 	static uint8_t motorControlCount = 0;
@@ -102,6 +116,7 @@ ISR(TIMER2_OVF_vect){							//period of 21.3333us. use a counter for longer dela
 	
 	if(ledB.count > 0) 	ledB.count--;
 	else 				ledB.state = 0;
+	
 }
 
 ISR(ADC_vect) {								//period of 69.3333us for a standard ADC read, 2x longer for first
@@ -159,11 +174,19 @@ void init_structs(void){
 	battery.cutoff 		= 6.5;
 	battery.count		= 0;
 	battery.limit 		= 5000;//about 1.5 seconds
+	
+	hat.config			= -1;
+	hat.dip	    		= -1;
+	hat.dir				= 0x00;		//Inputs by default
+	hat.int_07			= 0;		//No interrupts by default
 }
 
 void init(void){
 //V2.0		//Power reduction register
 //V2.0		PRR0 &= ~((1<<PRTWI0)|(1<<PRTIM2)|(1<<PRTIM0)|(1<<PRUSART1)|(1<<PRTIM1)|(1<<PRADC));
+
+	//UART
+		uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(BAUD, F_CPU));
 
 	//Motor Pins
 		DDRB |= (1<<MOTOR_A_PWM)|(1<<MOTOR_B_PWM);
@@ -191,8 +214,7 @@ void init(void){
 	//LED's
 		DDRC |= 0x0C;	//LEDs on C3:2
 		DDRD |= 0xE0;	//RGB on D7:5
-	
-	
+		
 		//LEDR	was OC0A	now OC2A
 		//LEDG	was OC0B	now OC1A
 		//LEDB	was OC2B	now OC2B
@@ -212,9 +234,6 @@ void init(void){
 		DIDR0	= (1<<ADC6D)|(1<<ADC7D);
 		ADMUX 	= (0<<REFS1)|(1<<REFS0)|(0<<MUX4)|(0<<MUX3)|(1<<MUX2)|(1<<MUX1)|(0<<MUX0); 	//AVCC reference voltage with external cap on AREF, multiplex to channel 6
 		ADCSRA 	= (1<<ADEN) |(1<<ADIE) |(1<<ADPS2)|(1<<ADPS1)|(0<<ADPS0);					//Enable ADC, enable interrupt, prescaler of 64 (187.5kHz sample rate)
-
-	//UART
-		uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(BAUD, F_CPU));
 	
 	//I2C
 		i2c_init();
@@ -816,15 +835,18 @@ int16_t main(void){
 
 	init_structs();
 	init();	
-
+	
 	ledB.state = 1;
 	ledB.count = 10000;
 	ledR.state = 1;
 	ledR.count = 10000;	
 
 	uart_puts_P("PenguinPi v2.0\n");
-	
+		
 	detect_reset();	
+	
+	init_hat( &hat );
+	
 //INIT Done	
 	
 
@@ -1020,13 +1042,17 @@ int16_t main(void){
 				}			
 			}
 		}else battery.count = 0;
+
+
+
 		
+
 		
 		if ( DEBUG==1 ) {
-			//TOGGLE LED1 : C3
-			PORTC = PORTC ^ 0x04;
+
+			uart_puts_P("# \n");
 			_delay_ms(100);
-			
+		
 			//to UART
 				//Voltage
 					sprintf(fstring, "Voltage: %5.3f V\n", vdiv.value);
