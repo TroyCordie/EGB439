@@ -1,11 +1,14 @@
-
+ 
 #include <stdio.h>
 #include <avr/io.h>
+#include <util/delay.h>
 
 #include "i2cmaster.h"
+#include "PCA6416A.h"
 #include "uart.h"
 
 #include "PenguinPi.h"
+
 
 
 int8_t 	mAQuadTable[4][4] = {{ 0, +1, -1,  2},
@@ -325,10 +328,96 @@ void fn_dbg_motor ( Motor *motor ){
 	
 }
 
+//#################################################################################################
+//
+// HATs
+//
+//#################################################################################################
+
+void init_hat( Hat_s *hat ) {
+	
+	uint8_t data_r[2] = {0, 0};
+	
+	//Config always on PCA6416A_1
+	//Read 2 bytes from address 0
+	//Set timeout to catch if no HAT present - I2C will hang otherwise.
+	
+	if ( i2c_check_device( PCA6416A_1+I2C_WRITE ) == -1 ){
+		//HAT not present or not ready
+	}
+	else {	
+		i2cReadnBytes(data_r, PCA6416A_1, 0x00, 2 );
+	
+		for(uint8_t i = 0; i < 2; i++){
+			sprintf(fstring, "CFG: 0x%2x\n", data_r[i] );
+			uart_puts(fstring);					
+		}			
+
+		hat->config	= data_r[0] & 0x0F;
+	}
+	
+	//What to do now with each different HAT option
+	switch( hat->config ) {
+		case 1 : 
+			uart_puts_P("HAT ID 1 : LEDs and OLED\n");			
+			//This is the OLED and LED HAT made for EGB439
+			//Has a DIP switch
+				hat->dip	= data_r[0] & 0xF0;
+			//4 buttons on data_r[1][3:0]
+				
+			//GPIO : All inupts
+			//Interrupt on HAT07
+				hat->dir	= 0x00;
+				hat->int_07	= 1;
+			
+			break;
+
+		case 2 : 
+			uart_puts_P("HAT ID 2 : IMU and OLED\n");			
+			//This is the OLED and IMU made for EGB445 ( Segway Robot )
+			//Has a DIP switch
+				hat->dip	= data_r[0] & 0xF0;
+			//4 buttons on data_r[1][3:0]
+			
+			//GPIO : All inupts
+			//Interrupt on HAT07
+				hat->dir	= 0x00;
+				hat->int_07	= 1;
+			
+			break;			
+	
+		default :
+			uart_puts_P("HAT NOT PRESENT or not SUPPORTED\n");			
+	}
 
 
+	if ( hat->int_07 == 1 ) {
+		//Enable PCINT2 interrupt
+		uart_puts_P("EN PCINT2\n");	
+
+		PCMSK2  |=   (1<<PCINT22);
+		
+		PCICR 	|=   (1<<PCIE2);		
+	}
+	
+	
+	//If any bits in hat->dir are '1' we need to make them an output from the AVR	
 
 
+	
+//	while (1){
+//		i2cReadnBytes(data_r, PCA6416A_1, 0x00, 2 );	
+//
+//		sprintf(fstring, "00 : 0x%2x", data_r[0] );
+//		uart_puts(fstring);					
+//		sprintf(fstring, "..01 : 0x%2x\n", data_r[1] );
+//		uart_puts(fstring);	
+//
+//		_delay_ms(100);		
+//		
+//	}
+	
+}
 
 
 
