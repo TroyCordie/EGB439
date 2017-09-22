@@ -18,6 +18,8 @@ char 	fstring[32];
 
 
 
+
+
 //Structs
 typedef struct {
 	volatile uint8_t 	enc1PinState;
@@ -87,9 +89,9 @@ typedef struct {
 } AnalogIn;
 
 struct Battery {
-	float cutoff;//volts
-	uint16_t count;
-	uint16_t limit;//number of cycles until it triggers a shutdown
+	float 				cutoff;				//volts
+	uint16_t 			count;
+	uint16_t 			limit;				//number of cycles until it triggers a shutdown
 } battery;
 
 typedef struct {
@@ -97,6 +99,7 @@ typedef struct {
 	int8_t 				dip;				// Status of the DIP switches 
 	uint8_t				dir;				// Set bit to 1 if direction of bit needs to be an output
 	uint8_t				int_07;				// Set bit to a 1 if interrupt enabled on HAT07
+	uint8_t				has_oled;			// Set bit to a 1 if the I2C OLED is on the hat
 } Hat_s;
 
 
@@ -121,12 +124,15 @@ union dgramMem {
 
 
 //function prototypes
-void init_structs	(void);
-void init			(void);
-void init_display	(void);
-void init_hat		( Hat_s *hat );
+void init_structs		( void );
+void init				( void );
+void init_display		( void );
+void init_hat			( Hat_s *hat );
+void init_oled			( void );
 
-void detect_reset(void);
+void oled_write_frame	( );
+
+void detect_reset	( void );
 
 float readFloat(uint8_t *datagram);
 uint8_t *float2char(float f);
@@ -139,7 +145,7 @@ void formdatagram(uint8_t *dgram, uint8_t address, uint8_t opCode, union dgramMe
 void parseDatagram(uint8_t *datagram);
 
 void i2cReadnBytes(uint8_t *data, uint8_t address, uint8_t reg, uint8_t n);
-int8_t i2cWritenBytes(uint8_t *data, uint8_t address, uint8_t reg, uint8_t n);
+int8_t i2cWritenBytes(uint8_t *data, uint8_t address, uint8_t reg, uint16_t n);
 int8_t i2cWriteByte(uint8_t data, uint8_t address, uint8_t reg);
 
 void parseMotorOp(uint8_t *datagram, Motor *motor);
