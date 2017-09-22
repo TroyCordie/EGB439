@@ -9,6 +9,15 @@
 #ifndef PENGUINPI_H_
 #define PENGUINPI_H_
 
+#define DGRAM_MAX_LENGTH 10 	//bytes
+
+
+//Global variables
+uint8_t datagramG[DGRAM_MAX_LENGTH+1];
+char 	fstring[32];
+
+
+
 //Structs
 typedef struct {
 	volatile uint8_t 	enc1PinState;
@@ -83,6 +92,15 @@ struct Battery {
 	uint16_t limit;//number of cycles until it triggers a shutdown
 } battery;
 
+typedef struct {
+	int8_t 				config;				// -1 if no HAT present
+	int8_t 				dip;				// Status of the DIP switches 
+	uint8_t				dir;				// Set bit to 1 if direction of bit needs to be an output
+	uint8_t				int_07;				// Set bit to a 1 if interrupt enabled on HAT07
+} Hat_s;
+
+
+
 
 union {
 	float f;
@@ -103,9 +121,11 @@ union dgramMem {
 
 
 //function prototypes
-void init_structs(void);
-void init(void);
-void init_display(void);
+void init_structs	(void);
+void init			(void);
+void init_display	(void);
+void init_hat		( Hat_s *hat );
+
 void detect_reset(void);
 
 float readFloat(uint8_t *datagram);
@@ -219,7 +239,7 @@ void buttonLogic(Button *button, uint8_t btnVal);
 //#define LITTLE_ENDIAN
 #define BIG_ENDIAN //NETWORK BYTE ORDER
 
-#define DGRAM_MAX_LENGTH 10 	//bytes
+
 #define UART_INTERBYTE_WAIT 80 	//us
 #define CRC_8_POLY 0xAE 		//generator polynomial
 
