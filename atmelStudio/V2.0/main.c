@@ -19,7 +19,7 @@
 #define DEBUG 0
  
 #define BAUD  115200
-#define F_CPU 8000000UL
+#define F_CPU 20000000UL
 
 #include <stdlib.h>
 #include <avr/io.h>
@@ -30,9 +30,9 @@
 #include <util/crc16.h>
 #include "i2cmaster.h"
 #include "uart.h"
-#include "PenguinPi.h"
 #include "PCA6416A.h"
 
+#include "PenguinPi.h"
 
 
 Motor 		motorA;
@@ -44,8 +44,6 @@ Display 	displayA;
 AnalogIn 	vdiv;
 AnalogIn 	csense;
 Hat_s		hat;
-
-
 
 
 
@@ -78,7 +76,7 @@ ISR(PCINT0_vect) {
 }
 
 ISR(PCINT2_vect) {
-	//PCINT2 contains the interrupt from HAT07 on PCINT22 which is PC6
+	//PCINT2 contains the interrupt from HAT07 on PCINT23 which is PC7
 	
 	uint8_t data_r[2]  = {0, 0};
 	
@@ -87,6 +85,23 @@ ISR(PCINT2_vect) {
 	
 	//Clear Interrupt by reading the device 
 		i2cReadnBytes(data_r, PCA6416A_1, 0x00, 2 );
+		
+	//data_r[0][7:4] contains the DIP switch which may have changed
+		hat.dip			= data_r[0] & 0xF0;
+		
+	//data_r[1][3:0] contains the buttons
+		for(uint8_t i = 0; i <= 3; i++) {
+			if ( bit_is_clear( data_r[1], i ) ) {	
+				//Button i has been pressed
+				sprintf(fstring, "BUT%d\n", i );
+				uart_puts(fstring);								
+				
+			}
+			else {
+				//Button i is not pressed
+									
+			}		
+		}
 	
 	
 	PORTC	= PORTC ^ 0x08;
@@ -179,6 +194,7 @@ void init_structs(void){
 	hat.dip	    		= -1;
 	hat.dir				= 0x00;		//Inputs by default
 	hat.int_07			= 0;		//No interrupts by default
+	hat.has_oled		= 0;		//No OLED by default
 }
 
 void init(void){
@@ -212,8 +228,8 @@ void init(void){
 		PCICR 	|=   (1<<PCIE0);																		//Enable interrupt on pin change
 			
 	//LED's
-		DDRC |= 0x0C;	//LEDs on C3:2
-		DDRD |= 0xE0;	//RGB on D7:5
+		DDRC 	|= 0x2C;	//LEDs on C5, 3:2
+		DDRD 	|= 0xE0;	//RGB on D7:5
 		
 		//LEDR	was OC0A	now OC2A
 		//LEDG	was OC0B	now OC1A
@@ -848,34 +864,45 @@ int16_t main(void){
 	init_hat( &hat );
 	
 //INIT Done	
-	
+
+
 
 //TESTS
-	//LEDs
-//	for(uint8_t j = 0; j < 3; j++) {
-//		PORTC= 0x00;
+//	//LEDs
+//		//Y0	C2
+//		//Y1	C3
+//		//Y2	C5
+//		PORTC = 0x00;
+//		_delay_ms(500);	
+//		PORTC = 0x2C;
+//		_delay_ms(500);			
+//		PORTC = 0x00;
+//		_delay_ms(500);	
+//		
+//		PORTC = PORTC | (1 << 2);
 //		_delay_ms(500);		
-//		PORTC= 0x0C;
+//		PORTC = PORTC | (1 << 3);
 //		_delay_ms(500);		
-//	}
+//		PORTC = PORTC | (1 << 5);
+//		_delay_ms(500);		
 
 
 	//RGB
-//	redLEDPercent(50);	
-//	_delay_ms(500);
-//	redLEDPercent(100);	
-//	_delay_ms(500);
-//	redLEDPercent(0);	
-//	greenLEDPercent(50);
-//	_delay_ms(500);
-//	greenLEDPercent(100);
-//	_delay_ms(500);	
-//	greenLEDPercent(0);
-//	blueLEDPercent(50);
-//	_delay_ms(500);
-//	blueLEDPercent(100);
-//	_delay_ms(500);	
-//	blueLEDPercent(0);
+ 	redLEDPercent(50);	
+ 	_delay_ms(500);
+ 	redLEDPercent(100);	
+ 	_delay_ms(500);
+ 	redLEDPercent(0);	
+ 	greenLEDPercent(50);
+ 	_delay_ms(500);
+ 	greenLEDPercent(100);
+ 	_delay_ms(500);	
+ 	greenLEDPercent(0);
+ 	blueLEDPercent(50);
+ 	_delay_ms(500);
+ 	blueLEDPercent(100);
+ 	_delay_ms(500);	
+ 	blueLEDPercent(0);
 	
 	//MOTORS	
 //	motorA.dir			=  1;
@@ -885,7 +912,7 @@ int16_t main(void){
 //	motorB.setSpeedDPS	= 90;	
 
 //END TESTS
-
+	
 
 	
 	uint8_t com;
