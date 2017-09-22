@@ -102,7 +102,9 @@ typedef struct {
 	uint8_t				has_oled;			// Set bit to a 1 if the I2C OLED is on the hat
 } Hat_s;
 
-
+typedef struct {
+	uint8_t 			show_option;		// Selects which screen to show
+} Display_s;
 
 
 union {
@@ -131,11 +133,13 @@ void 	init_hat			( Hat_s *hat );
 void 	init_oled			( void );
 
 void 	oled_clear_frame	( );
+void    oled_frame_divider  ( );
 void 	oled_write_frame	( );
-void 	oled_character		( uint8_t x, uint8_t y, char *character );
+void 	oled_character		( uint8_t x, uint8_t y, char character );
 void 	oled_string			( uint8_t x, uint8_t y, char *string );
 
-void 	oled_screen    		( uint8_t option, AnalogIn *vdiv, AnalogIn *csense );
+void 	oled_screen    		( Display_s *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *motorA, Motor *motorB );
+void    oled_next_screen	( Display_s *oled ); 
 
 void 	detect_reset		( void );
 
@@ -362,9 +366,11 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define GET_RESET 0x11
 
 //OLED Screen Options
-#define OLED_BATTERY	1 
-
-
+#define OLED_BATTERY	0
+#define OLED_MOTORS		1 
+#define OLED_ENCODERS	2
+#define OLED_IP_ADDR	3
+#define OLED_MAX		3
 
 static const uint8_t ASCII[][5] =
 {

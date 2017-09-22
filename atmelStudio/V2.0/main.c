@@ -17,6 +17,8 @@
  * cpu is ATmega644PA
  */
 #define DEBUG 0
+
+#define OLED_REFRESH 1000	//How often should the main loop run before OLED refresh. If too fast information cannot be seen
  
 #define BAUD  115200
 #define F_CPU 20000000UL
@@ -35,19 +37,22 @@
 #include "PenguinPi.h"
 
 
+//Always have
 Motor 		motorA;
 Motor 		motorB;
 LED 		ledR;
 LED 		ledG;
 LED 		ledB;
-Display 	displayA;
 AnalogIn 	vdiv;
 AnalogIn 	csense;
+
+//HAT dependant
 Hat_s		hat;
+Display_s	oled;
 
+Display 	displayA;	//remove when parsing logic changed
 
-
-
+uint8_t		hat_07_int_flag = 0;
 
 //#################################################################################################
 //
@@ -55,7 +60,7 @@ Hat_s		hat;
 //
 //#################################################################################################
 
-ISR(PCINT0_vect) {
+ISR( PCINT0_vect ) {
 	//All encoders are now on one PCINT vector
 	//Externally on PCINT{3:0} which is PA3:0
 
@@ -75,42 +80,17 @@ ISR(PCINT0_vect) {
 		ledG.count = 100;
 }
 
-ISR(PCINT2_vect) {
+ISR( PCINT2_vect ) {
 	//PCINT2 contains the interrupt from HAT07 on PCINT23 which is PC7
 	
-	uint8_t data_r[2]  = {0, 0};
-	
-	uint8_t PINC_val   = PINC;
-	
-	
-	//Clear Interrupt by reading the device 
-		i2cReadnBytes(data_r, PCA6416A_1, 0x00, 2 );
+	if ( bit_is_clear( PINC, 7 ) ) { 							// detect falling edge on PC7
 		
-	//data_r[0][7:4] contains the DIP switch which may have changed
-		hat.dip			= data_r[0] & 0xF0;
-		
-	//data_r[1][3:0] contains the buttons
-		for(uint8_t i = 0; i <= 3; i++) {
-			if ( bit_is_clear( data_r[1], i ) ) {	
-				//Button i has been pressed
-				sprintf(fstring, "BUT%d\n", i );
-				uart_puts(fstring);								
-				
-			}
-			else {
-				//Button i is not pressed
-									
-			}		
-		}
-	
-	
-	PORTC	= PORTC ^ 0x08;
-
-	uart_puts_P("PCINT2\n");	
+		//Need main loop to handle this as clearing INT will cause I2C clashes if not handled appropriately
+		hat_07_int_flag = 1;
+	}
 }
 
-
-ISR(TIMER2_OVF_vect){							//period of 21.3333us. use a counter for longer delays
+ISR( TIMER2_OVF_vect ){							// period of 21.3333us. use a counter for longer delays
 	static uint8_t motorControlCount = 0;
 	
 	if(motorControlCount < CONTROL_COUNT) {		//should achieve a period of 64 us
@@ -134,9 +114,9 @@ ISR(TIMER2_OVF_vect){							//period of 21.3333us. use a counter for longer dela
 	
 }
 
-ISR(ADC_vect) {								//period of 69.3333us for a standard ADC read, 2x longer for first
+ISR( ADC_vect ) {								// period of 69.3333us for a standard ADC read, 2x longer for first
 	if(vdiv.count > 1){
-		vdiv.count--;						//really this is just a counter to get a few readings before actually using the ADC value
+		vdiv.count--;							// really this is just a counter to get a few readings before actually using the ADC value
 		ADCSRA |= (1<<ADSC);
 	}
 	else if(vdiv.count == 1){
@@ -195,6 +175,9 @@ void init_structs(void){
 	hat.dir				= 0x00;		//Inputs by default
 	hat.int_07			= 0;		//No interrupts by default
 	hat.has_oled		= 0;		//No OLED by default
+	
+	oled.show_option	= OLED_BATTERY;	
+	
 }
 
 void init(void){
@@ -847,7 +830,14 @@ void parseAllOp		( uint8_t *datagram ){
 //
 //#################################################################################################
 
-int16_t main(void){
+int16_t main(void) {
+	
+	uint8_t 	data_r[2]  			= {0, 0};
+	
+	uint16_t 	oled_refresh_count 	= 0;
+	uint16_t 	debug_loop_count	= 0;
+	
+	
 
 	init_structs();
 	init();	
@@ -1070,17 +1060,83 @@ int16_t main(void){
 			}
 		}else battery.count = 0;
 
+		
+		//HAT Interrupt
+		if ( hat_07_int_flag == 1 ) {
+			//Have to act upon it here else we get I2C clashes between clearing the INT and OLED update
+						
+			//Clear Interrupt by reading the device 
+				i2cReadnBytes(data_r, PCA6416A_1, 0x00, 2 );					
+				
+			//data_r[0][7:4] contains the DIP switch which may have changed
+				hat.dip			= data_r[0] & 0xF0;
+			
+			//data_r[1][3:0] contains the buttons
+				for(uint8_t i = 0; i < 4; i++) {
+					if ( bit_is_clear( data_r[1], i ) ) {	
 
+						switch ( i ) {
+		
+							case 0 :	//Button S1 has been pressed											
+								oled_next_screen ( &oled );
+								break;
+	
+							case 1 : 	//Button S2 has been pressed											
+								motorA.dir			=   0;
+								motorA.setSpeedDPS	=   0;
+								motorB.dir			=   0;
+								motorB.setSpeedDPS	=   0;
+								break;
+								
+							case 2 : 	//Button S3 has been pressed											
+								motorA.dir			=  -1;
+								motorA.setSpeedDPS	=  50;
+								break;
+							
+							case 3 : 	//Button S4 has been pressed											
+								motorB.dir			=   1;
+								motorB.setSpeedDPS	= 100;
+								break;
+						}
+					}
+				}		
+			 							
+			hat_07_int_flag = 0;
+		}
+	
 
-		oled_screen( OLED_BATTERY, &vdiv, &csense );
+	
+		//Refresh OLED
+		if ( hat.has_oled == 1 ) {
+			if ( (DEBUG==1) | (oled_refresh_count == OLED_REFRESH) ) {
+				oled_refresh_count	= 0;
+				
+				oled_screen( &oled, &vdiv, &csense, &motorA, &motorB );
+			}
+			else {
+				oled_refresh_count++;				
+			} 
+		}
 
 		
 		if ( DEBUG==1 ) {
-
+		
 			uart_puts_P("# \n");
 			_delay_ms(100);
+			
+//			if ( debug_loop_count==20 ) {
+//				
+//				debug_loop_count = 0;
+//				oled_next_screen ( &oled );			//remove irq from issue
+//			}
+//			else debug_loop_count ++ ;
+			
 		
 			//to UART
+				//OLED Option
+					sprintf(fstring, "OLED: %d\n", oled.show_option );
+					uart_puts(fstring);				
+			
 				//Voltage
 					sprintf(fstring, "Voltage: %5.3f V\n", vdiv.value);
 					uart_puts(fstring);				
