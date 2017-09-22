@@ -126,7 +126,7 @@ GET_RESET = 0x11
 class UART(object):
     """Setup UART comunication between the raspberry pi and the microcontroler
     """
-    def __init__(self, port='/dev/attyAMA0', baud=115200):
+    def __init__(self, port='/dev/serial0', baud=115200):
         self.ser = serial.Serial(    port = port,
                                     baudrate = baud,
                                     parity = serial.PARITY_NONE,
@@ -213,7 +213,7 @@ class UART(object):
                     print(com.decode("utf-8", "ignore"))
 
 #create UART object
-uart = UART("/dev/ttyAMA0", 115200)
+uart = UART("/dev/serial0", 115200)
 
 
 
