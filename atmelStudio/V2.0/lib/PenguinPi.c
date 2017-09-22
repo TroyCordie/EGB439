@@ -24,15 +24,54 @@ int8_t  mBQuadTable[4][4] = {{ 0, -1, +1,  2},
 							 { 2, +1, -1,  0}};
 
 //OLED FRAME							 
+//uint8_t oled_frame[ SSD1306_BUFFERSIZE ] = {
+//0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//
+//0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//
+//0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//
+//0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+//};		
+		
+//ADAFRUIT		
 uint8_t oled_frame[ SSD1306_BUFFERSIZE ] = {
-0x00, 0x80, 0x00, 0x40, 0x00, 0x20, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,
 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x80, 0x80, 0xC0, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xF8, 0xE0, 0x00, 0x00, 0x00, 0x00,
@@ -60,9 +99,7 @@ uint8_t oled_frame[ SSD1306_BUFFERSIZE ] = {
 0x00, 0x03, 0x03, 0x00, 0x00, 0x00, 0x03, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
 0x03, 0x03, 0x03, 0x03, 0x03, 0x01, 0x00, 0x00, 0x00, 0x01, 0x03, 0x01, 0x00, 0x00, 0x00, 0x03,
 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};		
-				 
-
+};	
 
 void detect_reset(void){
 	//read MCUSR and determine what reset the AVR
@@ -419,8 +456,6 @@ void init_hat( Hat_s *hat ) {
 				data_r[1]	= 0;	//0 for OUTPUT
 				i2cWritenBytes( data_r, PCA6416A_0, 0x06, 2);
 				
-				
-			
 			break;
 
 		case 2 : 
@@ -535,43 +570,60 @@ void init_oled () {
     i2cWriteByte( SSD1306_SETDISPLAYOFFSET, 	SSD1306_DEFAULT_ADDRESS, 0x00 );
     i2cWriteByte( 0x00, 						SSD1306_DEFAULT_ADDRESS, 0x00 );
     
-    i2cWriteByte(SSD1306_SETSTARTLINE | 0x00, 	SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_SETSTARTLINE, 		SSD1306_DEFAULT_ADDRESS, 0x00 );
     
     // We use internal charge pump
-    i2cWriteByte(SSD1306_CHARGEPUMP, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
-    i2cWriteByte(0x14, 							SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_CHARGEPUMP, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( 0x14, 						SSD1306_DEFAULT_ADDRESS, 0x00 );
     
     // Horizontal memory mode
-    i2cWriteByte(SSD1306_MEMORYMODE, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
-    i2cWriteByte(0x00, 							SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_MEMORYMODE, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( 0x00, 						SSD1306_DEFAULT_ADDRESS, 0x00 );
     
-    i2cWriteByte(SSD1306_SEGREMAP | 0x1, 		SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_SEGREMAP | 0x1, 		SSD1306_DEFAULT_ADDRESS, 0x00 );
 
-    i2cWriteByte(SSD1306_COMSCANDEC, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_COMSCANDEC, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
 
-    i2cWriteByte(SSD1306_SETCOMPINS, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
-    i2cWriteByte(0x12, 							SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_SETCOMPINS, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( 0x02, 						SSD1306_DEFAULT_ADDRESS, 0x00 );
 
     // Max contrast
-    i2cWriteByte(SSD1306_SETCONTRAST, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
-    i2cWriteByte(0xCF, 							SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_SETCONTRAST, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( 0x8F, 						SSD1306_DEFAULT_ADDRESS, 0x00 );
 
-    i2cWriteByte(SSD1306_SETPRECHARGE, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
-    i2cWriteByte(0xF1, 							SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_SETPRECHARGE, 		SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( 0xF1, 						SSD1306_DEFAULT_ADDRESS, 0x00 );
 
-    i2cWriteByte(SSD1306_SETVCOMDETECT, 		SSD1306_DEFAULT_ADDRESS, 0x00 );
-    i2cWriteByte(0x40, 							SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_SETVCOMDETECT, 		SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( 0x40, 						SSD1306_DEFAULT_ADDRESS, 0x00 );
 
-    i2cWriteByte(SSD1306_DISPLAYALLON_RESUME, 	SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_DISPLAYALLON_RESUME, 	SSD1306_DEFAULT_ADDRESS, 0x00 );
 
     // Non-inverted display
-    i2cWriteByte(SSD1306_NORMALDISPLAY, 		SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_NORMALDISPLAY, 		SSD1306_DEFAULT_ADDRESS, 0x00 );
 
     // Turn display back on
-    i2cWriteByte(SSD1306_DISPLAYON, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
+    i2cWriteByte( SSD1306_DISPLAYON, 			SSD1306_DEFAULT_ADDRESS, 0x00 );
 	
+	//Update screen with initial Splash Screen contents
+		oled_write_frame();
+		
+		
+		
+//	_delay_ms(5000);
+//	oled_clear_frame();	
+//	oled_string( 0, 0, "PenguinPi" );	
+//	oled_string( 1, 1, "111111111" );
+//	oled_string( 2, 2, "222222222" );
+//	oled_string( 3, 3, "333333333" );
+//	oled_write_frame();	
+}
+
+void oled_clear_frame () {
 	
-	oled_write_frame();
+	for ( uint16_t i=0; i < SSD1306_BUFFERSIZE ; i++) {
+		oled_frame[i]	= 0;
+	}
 }
 
 void oled_write_frame () {
@@ -586,240 +638,73 @@ void oled_write_frame () {
 	i2cWriteByte( 0, 							SSD1306_DEFAULT_ADDRESS, 0x00 ); 	// Page start address (0 = reset)
   
 	i2cWriteByte( 3, 							SSD1306_DEFAULT_ADDRESS, 0x00 ); 	// Page end address 		32 => 3, 64 => 7
+	
+	//Split 512 bytes frame into smaller 16 bytes I2C transactions.
+	for (uint16_t i=0; i<SSD1306_BUFFERSIZE/16; i++) {
+		
+		memcpy( frame_i2c_buffer, &oled_frame[16*i], 16 );
+	
+		i2cWritenBytes( frame_i2c_buffer, SSD1306_DEFAULT_ADDRESS, 0x40, 16 );	
+	}
+}
 
+void oled_character( uint8_t x, uint8_t y, char *character ) {
 
-	//for (uint16_t j=0; j<16; j++) {
-	//	sprintf(fstring, "0x%02x ", oled_frame[j] );
-	//	uart_puts(fstring);			
-	//}
-	//uart_puts_P("\n");
+	int 		char_in_ascii 	= character;
+	uint16_t 	frame_addr 		= x + (128*y);		//128 added as oled_frame is 512 bytes or 128 columns x 4 rows
 	
+//	sprintf(fstring, "%d\n", char_in_ascii );
+//	uart_puts(fstring);	
 	
-//   for (uint16_t i=0; i<SSD1306_BUFFERSIZE/16; i++) {
-//		
-//		memcpy( frame_i2c_buffer, &oled_frame[16*i], 16 );
-//
-//		sprintf(fstring, "%d ", i );
-//		uart_puts(fstring);			
-//		
-//		for (uint16_t j=0; j<16; j++) {
-//			sprintf(fstring, "0x%02x ", frame_i2c_buffer[j] );
-//			
-//			uart_puts(fstring);			
-//		}
-//		uart_puts_P("\n");
-//		
-//		i2cWritenBytes( frame_i2c_buffer, SSD1306_DEFAULT_ADDRESS, 0x40, 16 );	
-//   }
+	//Take 5 entries from the ASCII array and put into the frame
+		for (int index = 0; index < 5; index++)
+		{
+			oled_frame[ frame_addr + index ]	= ASCII[ char_in_ascii - 0x20][index];
+		}	
+		
+		//space between characters
+		oled_frame[ frame_addr + 5 ] 			= 0x00;		
+}
+
+void oled_string   ( uint8_t x, uint8_t y, char *string ) {
+	//128 x 32 pixels on screen
+	//Characters are 6 pixels by 8
+	//Character display is therefore 21 x 4
+	//x and y inputs are intended to be on these terms, so y=3 is bottom line of characters
+		
+	uint8_t local_x = (6*x);
 	
-	i2cWritenBytes( oled_frame, SSD1306_DEFAULT_ADDRESS, 0x40, 512 );
+	while ( *string ) {
+		oled_character( local_x, y, *string++ );	
+		
+		local_x = local_x + 6;
+	}
+}
+
+void oled_screen   ( uint8_t option, AnalogIn *vdiv, AnalogIn *csense  ) {
 	
+	oled_clear_frame();	
 	
-  
+	switch ( option ) {
+		case OLED_BATTERY :
+			oled_string( 0, 0, "Battery Status" );
+			oled_string( 0, 1, "V = " );
+			oled_string( 0, 2, "I = " );
+
+			sprintf  	( fstring, "%1.3f V\n", vdiv->value);
+			oled_string ( 6,1,fstring ); 	
+			
+			sprintf  	( fstring, "%3.3f mA\n", csense->value);
+			oled_string ( 4,2,fstring );			
+			
+			break;			
+	}			
+	
+	oled_write_frame();
 }
 
 
 
-
-
-
-
-
-
-
-
-//#################################################################################################
-//
-// V1.0 CODE - Useful for Reference 
-//
-//#################################################################################################
-
-//DELETE	void init_display(void){
-//DELETE		//initialises the 7 segment display controller
-//DELETE		uint8_t reg[2] = {0, 0};
-//DELETE		i2cWritenBytes(reg, displayA.address, CONFIG_0, 2); //configures both ports as outputs
-//DELETE		i2cWritenBytes(reg, displayA.address, OUTPUT_0, 2); //sets both outputs to 0
-//DELETE	}
-
-//DELETE	void update_dd7s(Display *display){//TODO: fix this up
-//DELETE		uint8_t reg[2]= {0, 0}; // MS, LS digits
-//DELETE	    uint8_t value = display->value;
-//DELETE	    int8_t  svalue;
-//DELETE	
-//DELETE	    switch (display->mode) {
-//DELETE	    case 0: // hex mode
-//DELETE	        reg[0] = digit0[(value>>4) & 0x0f];
-//DELETE	        reg[1] = digit1[value & 0x0f];
-//DELETE	        break;
-//DELETE	    case 1: // unsigned decimal, light up the decimal point
-//DELETE	        if (value > 99)
-//DELETE	            value = 99;
-//DELETE	        reg[0] = digit0[(uint8_t)value/10];
-//DELETE	        reg[1] = digit1[(uint8_t)value%10]|SEGMENTDP_1;
-//DELETE	        break;
-//DELETE	    case 2: // signed decimal -9 to +9
-//DELETE	        svalue = (int8_t) value;
-//DELETE	        if (svalue < -9)
-//DELETE	            svalue = -9;
-//DELETE	        else if (svalue > 9)
-//DELETE	            svalue = 9;
-//DELETE	        if (svalue < 0)
-//DELETE				reg[0] = SEGMENTG_0;    // minus sign
-//DELETE	        reg[1] = digit1[abs(svalue)]|SEGMENTDP_1;
-//DELETE	        break;
-//DELETE	    }
-//DELETE	    /*
-//DELETE		//determine the best way to display the value
-//DELETE		if(display->value != 0xFF){
-//DELETE			displayBase10(reg, display->value);
-//DELETE		}else{
-//DELETE	
-//DELETE		}
-//DELETE		//if(display->digit0 != 0xFF) reg[0] = digit0[display->digit0];//digit0 and digit1 will override value
-//DELETE		//if(display->digit1 != 0xFF) reg[1] = digit1[display->digit1];
-//DELETE	    */
-//DELETE	
-//DELETE		i2cWritenBytes(reg, display->address, OUTPUT_0, 2);
-//DELETE	}
-
-//DELETE	void displayBase10(uint8_t *reg, int16_t value){
-//DELETE		if(value < 0){
-//DELETE			//negative numbers
-//DELETE			if(value > -1){
-//DELETE				//decimal
-//DELETE	
-//DELETE			}else if(value < -15){
-//DELETE				//too low to display
-//DELETE				reg[0] = SEGMENTG_0;
-//DELETE				reg[1] = DIGIT1_O;
-//DELETE			}else{
-//DELETE				reg[0] = SEGMENTG_0;
-//DELETE				reg[1] = digit1[abs(value)]|SEGMENTDP_1;
-//DELETE			}
-//DELETE		}else{
-//DELETE			//positive numbers
-//DELETE			if(value < 1){
-//DELETE				//decimal
-//DELETE				reg[0] = digit0[(uint8_t)value*10];
-//DELETE			}else if(value < 10){
-//DELETE				//can still display 1 decimal place
-//DELETE			}else if(value > 10){
-//DELETE				//only integers here
-//DELETE				reg[0] = digit0[(uint8_t)value/10];
-//DELETE				reg[1] = digit1[(uint8_t)value%10]|SEGMENTDP_1;
-//DELETE			}
-//DELETE		}
-//DELETE	}
-
-//DELETE	void parseServoOp(uint8_t *datagram, Servo *servo){
-//DELETE		switch(datagram[2]){
-//DELETE			//SETTERS
-//DELETE			case SERVO_SET_POSITION:
-//DELETE				if(datagram[0] == 5){
-//DELETE					int16_t pos = (datagram[3]<<8)|datagram[4];
-//DELETE					if(pos > servo->maxRange) pos = servo->maxRange;
-//DELETE					else if(pos < servo->minRange) pos = servo->minRange;
-//DELETE					servo->setPos = pos;
-//DELETE					servo->state = 1;
-//DELETE				}else{
-//DELETE					uart_puts_P("ERROR: Incorrect Type\n");
-//DELETE				}
-//DELETE			break;
-//DELETE			case SERVO_SET_STATE:
-//DELETE				if(datagram[0] == 4){
-//DELETE					int8_t state = datagram[3];
-//DELETE					if(state >= 1) servo->state = 1;
-//DELETE					else servo->state = 0;
-//DELETE				}else{
-//DELETE					uart_puts_P("ERROR: Incorrect Type\n");
-//DELETE				}
-//DELETE			break;
-//DELETE			case SERVO_SET_MIN_RANGE:
-//DELETE				if(datagram[0] == 5){
-//DELETE					int16_t min = (datagram[3]<<8)|datagram[4];
-//DELETE					if(min < 0) min = 0;
-//DELETE					if(min > 360) min = 360;
-//DELETE					if(min > servo->maxRange) min = servo->maxRange;
-//DELETE					servo->minRange = min;
-//DELETE				}else{
-//DELETE					uart_puts_P("ERROR: Incorrect Type\n");
-//DELETE				}
-//DELETE			break;
-//DELETE			case SERVO_SET_MAX_RANGE:
-//DELETE				if(datagram[0] == 5){
-//DELETE					int16_t max = (datagram[3]<<8)|datagram[4];
-//DELETE					if(max < 0) max = 0;
-//DELETE					if(max > 360) max = 360;
-//DELETE					if(max < servo->minRange) max = servo->minRange;
-//DELETE					servo->maxRange = max;
-//DELETE				}else{
-//DELETE					uart_puts_P("ERROR: Incorrect Type\n");
-//DELETE				}
-//DELETE			break;
-//DELETE			case SERVO_SET_MIN_PWM:
-//DELETE				if(datagram[0] == 5){
-//DELETE					uint16_t min = (datagram[3]<<8)|datagram[4];
-//DELETE					if(min < 0) min = 0;
-//DELETE					if(min > 30000) min = 30000;
-//DELETE					if(min > servo->maxPWM) min = servo->maxPWM;
-//DELETE					servo->minPWM = min;
-//DELETE				}else{
-//DELETE					uart_puts_P("ERROR: Incorrect Type\n");
-//DELETE				}
-//DELETE			break;
-//DELETE			case SERVO_SET_MAX_PWM:
-//DELETE				if(datagram[0] == 5){
-//DELETE					uint16_t max = (datagram[3]<<8)|datagram[4];
-//DELETE					if(max < 0) max = 0;
-//DELETE					if(max > 30000) max = 30000;
-//DELETE					if(max < servo->minPWM) max = servo->minPWM;
-//DELETE					servo->maxPWM = max;
-//DELETE				}else{
-//DELETE					uart_puts_P("ERROR: Incorrect Type\n");
-//DELETE				}
-//DELETE			break;
-//DELETE	
-//DELETE			//GETTERS
-//DELETE			case SERVO_GET_POSITION:
-//DELETE				dgrammem.in = servo->setPos;
-//DELETE				formdatagram(datagramG, datagram[1], SERVO_SET_POSITION, dgrammem, 'i');
-//DELETE				uartputcs(datagramG);
-//DELETE			break;
-//DELETE			case SERVO_GET_STATE:
-//DELETE				dgrammem.ch = servo->state;
-//DELETE				formdatagram(datagramG, datagram[1], SERVO_SET_STATE, dgrammem, 'c');
-//DELETE				uartputcs(datagramG);
-//DELETE			break;
-//DELETE			case SERVO_GET_MIN_RANGE:
-//DELETE				dgrammem.in = servo->minRange;
-//DELETE				formdatagram(datagramG, datagram[1], SERVO_SET_MIN_RANGE, dgrammem, 'i');
-//DELETE				uartputcs(datagramG);
-//DELETE			break;
-//DELETE			case SERVO_GET_MAX_RANGE:
-//DELETE				dgrammem.in = servo->maxRange;
-//DELETE				formdatagram(datagramG, datagram[1], SERVO_SET_MAX_RANGE, dgrammem, 'i');
-//DELETE				uartputcs(datagramG);
-//DELETE			break;
-//DELETE			case SERVO_GET_MIN_PWM:
-//DELETE				dgrammem.in = servo->minPWM;
-//DELETE				formdatagram(datagramG, datagram[1], SERVO_SET_MIN_PWM, dgrammem, 'i');
-//DELETE				uartputcs(datagramG);
-//DELETE			break;
-//DELETE			case SERVO_GET_MAX_PWM:
-//DELETE				dgrammem.in = servo->maxPWM;
-//DELETE				formdatagram(datagramG, datagram[1], SERVO_SET_MAX_PWM, dgrammem, 'i');
-//DELETE				uartputcs(datagramG);
-//DELETE			break;
-//DELETE	
-//DELETE			default:
-//DELETE				uart_puts_P("ERROR: Unknown OpCode\n");
-//DELETE				//flash BLUE LED
-//DELETE				ledB.state = 1;
-//DELETE				ledB.count = 1000;
-//DELETE			break;
-//DELETE		}
-//DELETE		
-//DELETE	}
 
 
 

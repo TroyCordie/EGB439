@@ -205,8 +205,8 @@ void init(void){
 		uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(BAUD, F_CPU));
 
 	//Motor Pins
-		DDRB |= (1<<MOTOR_A_PWM)|(1<<MOTOR_B_PWM);
-		DDRB |= (1<<MOTOR_A_PHA)|(1<<MOTOR_B_PHA);
+		DDRB |= (1<<MOTOR_A_PWM) | (1<<MOTOR_B_PWM);
+		DDRB |= (1<<MOTOR_A_PHA) | (1<<MOTOR_B_PHA);
 
 	//Motor PWM
 		//V1 was OC1A and OC1B
@@ -905,7 +905,7 @@ int16_t main(void){
  	blueLEDPercent(0);
 	
 	//MOTORS	
-//	motorA.dir			=  1;
+//	motorA.dir			= -1;
 //	motorA.setSpeedDPS	= 50;
 	
 //	motorB.dir			= -1;
@@ -940,26 +940,26 @@ int16_t main(void){
         /*
          * this is the non-PID code that needs to be run only if motor->controlMode == 0
          */
-		OCR0B = mapRanges( abs(motorA.setSpeedDPS), 0, 100, 0, 255 );
+		OCR0A = mapRanges( abs(motorA.setSpeedDPS), 0, 100, 0, 255 );
 
-		if(motorA.dir == 1){
+		if( motorA.dir == 1 ){
 			PORTB |= (1<<MOTOR_A_PHA);
 		} else if(motorA.dir == -1) {
 			PORTB &= ~(1<<MOTOR_A_PHA);
 		} else {
-			OCR0B = 0;
+			OCR0A = 0;
 		}
 
-		OCR0A = mapRanges( abs(motorB.setSpeedDPS), 0, 100, 0, 255 );
+		OCR0B = mapRanges( abs(motorB.setSpeedDPS), 0, 100, 0, 255 );
 
-		if(motorB.dir == 1) {			
+		if( motorB.dir == 1 ) {			
 			PORTB &= ~(1<<MOTOR_B_PHA);
 		}
 		else if(motorB.dir == -1) {
 			PORTB |= (1<<MOTOR_B_PHA);
 		}
 		else {
-			OCR0A = 0;
+			OCR0B = 0;
 		}
 		
 		
@@ -1072,7 +1072,7 @@ int16_t main(void){
 
 
 
-		
+		oled_screen( OLED_BATTERY, &vdiv, &csense );
 
 		
 		if ( DEBUG==1 ) {
