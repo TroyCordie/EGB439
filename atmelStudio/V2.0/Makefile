@@ -5,7 +5,7 @@ MCU=atmega644p
 
 CC=avr-gcc
 OBJCOPY=avr-objcopy
-CFLAGS=-Os -DF_CPU=8000000UL -mmcu=${MCU} -Wall -I./lib -std=gnu99
+CFLAGS=-Os -DF_CPU=20000000UL -mmcu=${MCU} -Wall -I./lib -std=gnu99
 
 
 
