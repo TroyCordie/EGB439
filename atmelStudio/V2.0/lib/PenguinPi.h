@@ -11,6 +11,8 @@
 
 #define DGRAM_MAX_LENGTH 10 	//bytes
 
+#define I2C_IMU	0b01101000
+
 
 //Global variables
 uint8_t datagramG[DGRAM_MAX_LENGTH+1];
@@ -138,7 +140,7 @@ void 	oled_write_frame	( );
 void 	oled_character		( uint8_t x, uint8_t y, char character );
 void 	oled_string			( uint8_t x, uint8_t y, char *string );
 
-void 	oled_screen    		( Display_s *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *motorA, Motor *motorB );
+void 	oled_screen    		( Display_s *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *motorA, Motor *motorB, Display *display );
 void    oled_next_screen	( Display_s *oled ); 
 
 void 	detect_reset		( void );
@@ -259,69 +261,69 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define CRC_8_POLY 0xAE 		//generator polynomial
 
 //device addresses
-#define AD_MOTORS 0x01
-#define AD_MOTOR_A 0x04
-#define AD_MOTOR_B 0x05
+#define AD_MOTORS  		0x01
+#define AD_MOTOR_A 		0x04
+#define AD_MOTOR_B 		0x05
+		
+#define AD_SERVOS  		0x02
+#define AD_SERVO_A 		0x08
+#define AD_SERVO_B 		0x09
 
-#define AD_SERVOS 0x02
-#define AD_SERVO_A 0x08
-#define AD_SERVO_B 0x09
+#define AD_LEDS  		0x03
+#define AD_LED_R 		0x0C
+#define AD_LED_G 		0x0D
+#define AD_LED_B 		0x0E
 
-#define AD_LEDS 0x03
-#define AD_LED_R 0x0C
-#define AD_LED_G 0x0D
-#define AD_LED_B 0x0E
+//#define AD_DISPLAYS  	0x04	--same as MOTOR A !!!
+#define AD_DISPLAY_A 	0x10
 
-#define AD_DISPLAYS 0x04
-#define AD_DISPLAY_A 0x10
+#define AD_BTNS  		0x05
+#define AD_BTN_A 		0x14
+#define AD_BTN_B 		0x15
+#define AD_BTN_C 		0x16
 
-#define AD_BTNS 0x05
-#define AD_BTN_A 0x14
-#define AD_BTN_B 0x15
-#define AD_BTN_C 0x16
+#define AD_ADCS 		0x06
+#define AD_ADC_V 		0x18
+#define AD_ADC_C 		0x19
 
-#define AD_ADCS 0x06
-#define AD_ADC_V 0x18
-#define AD_ADC_C 0x19
-
-#define AD_ALL 0xFF
+#define AD_ALL 			0xFF
 
 //device opcodes
 //MOTOR
-#define MOTOR_SET_SPEED_DPS 0x01
-#define MOTOR_SET_DEGREES 0x02
-#define MOTOR_SET_DIRECTION 0x03
-#define MOTOR_SET_GAIN_P 0x04
-#define MOTOR_SET_GAIN_I 0x05
-#define MOTOR_SET_GAIN_D 0x06
-#define MOTOR_SET_ENC_MODE 0x07
-#define MOTOR_SET_ENC 0x08
-#define MOTOR_SET_CONTROL_MODE 0x09
+#define MOTOR_SET_SPEED_DPS 	0x01
+#define MOTOR_SET_DEGREES 		0x02
+#define MOTOR_SET_DIRECTION 	0x03
+#define MOTOR_SET_GAIN_P 		0x04
+#define MOTOR_SET_GAIN_I 		0x05
+#define MOTOR_SET_GAIN_D 		0x06
+#define MOTOR_SET_ENC_MODE 		0x07
+#define MOTOR_SET_ENC 			0x08
+#define MOTOR_SET_CONTROL_MODE 	0x09
 
-#define MOTOR_GET_SPEED_DPS 0x81
-#define MOTOR_GET_DEGREES 0x82
-#define MOTOR_GET_DIRECTION 0x83
-#define MOTOR_GET_GAIN_P 0x84
-#define MOTOR_GET_GAIN_I 0x85
-#define MOTOR_GET_GAIN_D 0x86
-#define MOTOR_GET_ENC_MODE 0x87
-#define MOTOR_GET_ENC 0x88
-#define MOTOR_GET_CONTROL_MODE 0x89
+#define MOTOR_GET_SPEED_DPS 	0x81
+#define MOTOR_GET_DEGREES 		0x82
+#define MOTOR_GET_DIRECTION 	0x83
+#define MOTOR_GET_GAIN_P 		0x84
+#define MOTOR_GET_GAIN_I 		0x85
+#define MOTOR_GET_GAIN_D 		0x86
+#define MOTOR_GET_ENC_MODE 		0x87
+#define MOTOR_GET_ENC 			0x88
+#define MOTOR_GET_CONTROL_MODE 	0x89
 
 //SERVO
-#define SERVO_SET_POSITION 0x01
-#define SERVO_SET_STATE 0x02
-#define SERVO_SET_MIN_RANGE 0x03
-#define SERVO_SET_MAX_RANGE 0x04
-#define SERVO_SET_MIN_PWM 0x05
-#define SERVO_SET_MAX_PWM 0x06
+#define SERVO_SET_POSITION 		0x01
+#define SERVO_SET_STATE 		0x02
+#define SERVO_SET_MIN_RANGE 	0x03
+#define SERVO_SET_MAX_RANGE 	0x04
+#define SERVO_SET_MIN_PWM 		0x05
+#define SERVO_SET_MAX_PWM 		0x06
 
-#define SERVO_GET_POSITION 0x81
-#define SERVO_GET_STATE 0x82
-#define SERVO_GET_MIN_RANGE 0x83
-#define SERVO_GET_MAX_RANGE 0x84
-#define SERVO_GET_MIN_PWM 0x85
-#define SERVO_GET_MAX_PWM 0x86
+#define SERVO_GET_POSITION 		0x81
+#define SERVO_GET_STATE 		0x82
+#define SERVO_GET_MIN_RANGE 	0x83
+#define SERVO_GET_MAX_RANGE 	0x84
+#define SERVO_GET_MIN_PWM 		0x85
+#define SERVO_GET_MAX_PWM 		0x86
 
 //LED
 #define LED_SET_STATE 0x01
@@ -333,15 +335,15 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define LED_GET_COUNT 0x83
 
 //DISPLAY
-#define DISPLAY_SET_VALUE 0x01
+#define DISPLAY_SET_VALUE 	0x01
 #define DISPLAY_SET_DIGIT_1 0x02
 #define DISPLAY_SET_DIGIT_0 0x03
-#define DISPLAY_SET_MODE 0x04
+#define DISPLAY_SET_MODE 	0x04
 
-#define DISPLAY_GET_VALUE 0x81
+#define DISPLAY_GET_VALUE 	0x81
 #define DISPLAY_GET_DIGIT_1 0x82
 #define DISPLAY_GET_DIGIT_0 0x83
-#define DISPLAY_GET_MODE 0x84
+#define DISPLAY_GET_MODE 	0x84
 
 //BUTTON
 #define BUTTON_SET_PROGRAM_MODE 0x01
@@ -370,7 +372,9 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define OLED_MOTORS		1 
 #define OLED_ENCODERS	2
 #define OLED_IP_ADDR	3
-#define OLED_MAX		3
+#define OLED_DISPLAY	4
+#define OLED_SHUTDOWN	5	//Keep this as highest
+
 
 static const uint8_t ASCII[][5] =
 {

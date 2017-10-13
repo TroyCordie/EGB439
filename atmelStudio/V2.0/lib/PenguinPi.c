@@ -652,7 +652,7 @@ void oled_string   ( uint8_t x, uint8_t y, char *string ) {
 
 void oled_next_screen ( Display_s *oled ) {
 	
-	if ( oled->show_option == OLED_MAX ) {
+	if ( oled->show_option == OLED_SHUTDOWN-1 ) {		//Dont increment into SHUTDOWN screen
 		oled->show_option = 0;	
 //		uart_puts_P("OLED 0\n");		
 	}
@@ -663,11 +663,28 @@ void oled_next_screen ( Display_s *oled ) {
 	
 }
 
-void oled_screen   ( Display_s *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *motorA, Motor *motorB ) {
+void oled_screen   ( Display_s *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *motorA, Motor *motorB, Display *display ) {
 	
 	oled_clear_frame();	
 	
 	switch ( oled->show_option ) {
+		case OLED_DISPLAY : 
+			oled_string( 0, 0, "DISPLAY" );
+			sprintf(fstring, "%d", display->address );
+			oled_string ( 0,1,fstring ); 	
+			sprintf(fstring, "%d", display->draw );
+			oled_string ( 10,1,fstring ); 	
+			sprintf(fstring, "%d", display->value );
+			oled_string ( 0,2,fstring ); 	
+			sprintf(fstring, "%d", display->mode );
+			oled_string ( 10,2,fstring ); 				
+			sprintf(fstring, "%d", display->digit0 );
+			oled_string ( 0,3,fstring ); 	
+			sprintf(fstring, "%d", display->digit1 );
+			oled_string ( 10,3,fstring ); 	
+		
+			break;
+		
 		case OLED_BATTERY :
 			oled_string( 0, 0, "BATTERY" ); 
 			
@@ -736,6 +753,11 @@ void oled_screen   ( Display_s *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *m
 			oled_string( 0, 1, "eth0  131.181.333.111" );
 			oled_string( 0, 2, "wlan0 131.181.333.222" );
 			oled_string( 0, 3, "wlan1 131.181.333.333" );
+		
+			break;
+			
+		case OLED_SHUTDOWN : 
+			oled_string( 0, 0, "SHUTDOWN" );
 		
 			break;
 	}			
