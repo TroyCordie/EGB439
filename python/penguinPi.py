@@ -705,32 +705,35 @@ class OLED(object):
         self.ip_wlan_4  = 0
 		
 #SETTERS
-    def set_ip_eth( self, addr_1=0 ,addr_2=0, addr_3=0, addr_4=0 ):
-        self.ip_eth_1 = addr_1
-        self.ip_eth_2 = addr_2
-        self.ip_eth_3 = addr_3
-        self.ip_eth_4 = addr_4
-        dgram = form_datagram(self.address, OLED_SET_IP_ETH_1, addr_1, 'int')
+    def set_ip_eth( self, ip_addr_str ):
+        self.ip_eth_1 = int( ip_addr_str.split('.',4)[0] )
+        self.ip_eth_2 = int( ip_addr_str.split('.',4)[1] )
+        self.ip_eth_3 = int( ip_addr_str.split('.',4)[2] )
+        self.ip_eth_4 = int( ip_addr_str.split('.',4)[3] )
+
+        dgram = form_datagram(self.address, OLED_SET_IP_ETH_1, self.ip_eth_1, 'int')
         uart.putcs(dgram)
-        dgram = form_datagram(self.address, OLED_SET_IP_ETH_2, addr_2, 'int')
+        dgram = form_datagram(self.address, OLED_SET_IP_ETH_2, self.ip_eth_2, 'int')
         uart.putcs(dgram)
-        dgram = form_datagram(self.address, OLED_SET_IP_ETH_3, addr_3, 'int')
+        dgram = form_datagram(self.address, OLED_SET_IP_ETH_3, self.ip_eth_3, 'int')
         uart.putcs(dgram)
-        dgram = form_datagram(self.address, OLED_SET_IP_ETH_4, addr_4, 'int')
+        dgram = form_datagram(self.address, OLED_SET_IP_ETH_4, self.ip_eth_4, 'int')
         uart.putcs(dgram)
 
-    def set_ip_wlan( self, addr_1=0 ,addr_2=0, addr_3=0, addr_4=0 ):
-        self.ip_wlan_1 = addr_1
-        self.ip_wlan_2 = addr_2
-        self.ip_wlan_3 = addr_3
-        self.ip_wlan_4 = addr_4
-        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_1, addr_1, 'int')
+    def set_ip_wlan( self, ip_addr_str ):
+        self.ip_wlan_1 = int( ip_addr_str.split('.',4)[0] )
+        self.ip_wlan_2 = int( ip_addr_str.split('.',4)[1] )
+        self.ip_wlan_3 = int( ip_addr_str.split('.',4)[2] )
+        self.ip_wlan_4 = int( ip_addr_str.split('.',4)[3] )
+
+        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_1, self.ip_wlan_1, 'int')
         uart.putcs(dgram)
-        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_2, addr_2, 'int')
+        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_2, self.ip_wlan_2, 'int')
         uart.putcs(dgram)
-        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_3, addr_3, 'int')
+        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_3, self.ip_wlan_3, 'int')
         uart.putcs(dgram)
-        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_4, addr_4, 'int')
+        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_4, self.ip_wlan_4, 'int')
         uart.putcs(dgram)
+
 
 
