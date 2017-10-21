@@ -399,10 +399,10 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define GET_RESET 0x11
 
 //OLED Screen Options
-#define OLED_BATTERY	0
-#define OLED_MOTORS		1 
-#define OLED_ENCODERS	2
-#define OLED_IP_ADDR	3
+#define OLED_IP_ADDR	0
+#define OLED_BATTERY	1
+#define OLED_MOTORS		2 
+#define OLED_ENCODERS	3
 #define OLED_DISPLAY	4
 #define OLED_DATAGRAM	5
 //Options are screens that appear but not via user selection
