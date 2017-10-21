@@ -17,32 +17,39 @@ DGRAM_MAX_LENGTH = 10 #bytes
 CRC_8_POLY = 0xAE
 
 #addresses
-AD_MOTORS = 0x01
-AD_MOTOR_A = 0x04
-AD_MOTOR_B = 0x05
+AD_MOTORS 	= 0x01
+AD_MOTOR_A 		= 0x04
+AD_MOTOR_B 		= 0x05
 
-AD_SERVOS = 0x02
-AD_SERVO_A = 0x08
-AD_SERVO_B = 0x09
+AD_SERVOS 	= 0x02
+AD_SERVO_A 		= 0x08
+AD_SERVO_B 		= 0x09
 
-AD_LEDS = 0x03
-AD_LED_R = 0x0C
-AD_LED_G = 0x0D
-AD_LED_B = 0x0E
+AD_LEDS 	= 0x03
+AD_LED_R 		= 0x0C
+AD_LED_G 		= 0x0D
+AD_LED_B 		= 0x0E
 
-AD_DISPLAYS = 0x04
-AD_DISPLAY_A = 0x10
+AD_DISPLAYS	= 0x04
+AD_DISPLAY_A 	= 0x10
 
-AD_BTNS = 0x05
-AD_BTN_A = 0x14
-AD_BTNS_B = 0x15
-AD_BTNS_C = 0x16
+AD_BTNS 	= 0x05
+AD_BTN_A 		= 0x14
+AD_BTNS_B 		= 0x15
+AD_BTNS_C 		= 0x16
 
-AD_ADCS = 0x06
-AD_ADC_V = 0x18
-AD_ADC_C = 0x19
+AD_ADCS 	= 0x06
+AD_ADC_V 		= 0x18
+AD_ADC_C 		= 0x19
 
-AD_ALL = 0xFF
+AD_OLED		= 0x07
+
+
+
+
+AD_SYSTEM	= 0xF0				#System Control of the AVR i.e taking control of the I2C
+
+AD_ALL 		= 0xFF
 
 #opcodes
 #MOTOR
@@ -100,6 +107,17 @@ DISPLAY_GET_VALUE = 0x81
 DISPLAY_GET_DIGIT_1 = 0x82
 DISPLAY_GET_DIGIT_0 = 0x83
 DISPLAY_GET_MODE = 0x84
+
+#OLED
+OLED_SET_IP_ETH_1  =0x01
+OLED_SET_IP_ETH_2  =0x02
+OLED_SET_IP_ETH_3  =0x03
+OLED_SET_IP_ETH_4  =0x04
+OLED_SET_IP_WLAN_1 =0x05
+OLED_SET_IP_WLAN_2 =0x06
+OLED_SET_IP_WLAN_3 =0x07
+OLED_SET_IP_WLAN_4 =0x08
+
 
 #BUTTON
 BUTTON_SET_PROGRAM_MODE = 0x01
@@ -667,3 +685,52 @@ class AnalogIn(object):
         self.get_scale()
         self.get_raw()
         self.get_value()
+		
+		
+'''
+OLED Object
+    used to set registers in the AVR to show information on the OLED
+'''
+class OLED(object):
+
+    def __init__(self, address):
+        self.address = address
+        self.ip_eth_1   = 0
+        self.ip_eth_2   = 0
+        self.ip_eth_3   = 0
+        self.ip_eth_4   = 0
+        self.ip_wlan_1  = 0
+        self.ip_wlan_2  = 0
+        self.ip_wlan_3  = 0
+        self.ip_wlan_4  = 0
+		
+#SETTERS
+    def set_ip_eth( self, addr_1=0 ,addr_2=0, addr_3=0, addr_4=0 ):
+        self.ip_eth_1 = addr_1
+        self.ip_eth_2 = addr_2
+        self.ip_eth_3 = addr_3
+        self.ip_eth_4 = addr_4
+        dgram = form_datagram(self.address, OLED_SET_IP_ETH_1, addr_1, 'int')
+        uart.putcs(dgram)
+        dgram = form_datagram(self.address, OLED_SET_IP_ETH_2, addr_2, 'int')
+        uart.putcs(dgram)
+        dgram = form_datagram(self.address, OLED_SET_IP_ETH_3, addr_3, 'int')
+        uart.putcs(dgram)
+        dgram = form_datagram(self.address, OLED_SET_IP_ETH_4, addr_4, 'int')
+        uart.putcs(dgram)
+
+    def set_ip_wlan( self, addr_1=0 ,addr_2=0, addr_3=0, addr_4=0 ):
+        self.ip_wlan_1 = addr_1
+        self.ip_wlan_2 = addr_2
+        self.ip_wlan_3 = addr_3
+        self.ip_wlan_4 = addr_4
+        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_1, addr_1, 'int')
+        uart.putcs(dgram)
+        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_2, addr_2, 'int')
+        uart.putcs(dgram)
+        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_3, addr_3, 'int')
+        uart.putcs(dgram)
+        dgram = form_datagram(self.address, OLED_SET_IP_WLAN_4, addr_4, 'int')
+        uart.putcs(dgram)
+
+
