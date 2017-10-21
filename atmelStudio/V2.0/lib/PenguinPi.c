@@ -650,11 +650,10 @@ void oled_string   ( uint8_t x, uint8_t y, char *string ) {
 	}
 }
 
-void oled_next_screen ( Display_s *oled ) {
+void oled_next_screen ( Hat_oled *oled ) {
 	
-	if ( oled->show_option == OLED_SHUTDOWN-1 ) {		//Dont increment into SHUTDOWN screen
-		oled->show_option = 0;	
-//		uart_puts_P("OLED 0\n");		
+	if ( oled->show_option >= OLED_ERROR-1 ) {		//Dont increment into OLED_ERROR screen or anything further
+		oled->show_option = 0;		
 	}
 	else {
 		oled->show_option = oled->show_option + 1;
@@ -663,7 +662,50 @@ void oled_next_screen ( Display_s *oled ) {
 	
 }
 
-void oled_screen   ( Display_s *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *motorA, Motor *motorB, Display *display ) {
+void  oled_show_error	( Hat_oled *oled, char *msg ){
+	
+	uint8_t char_count = 0;
+	
+	while ( *msg ) {
+		if ( char_count>63) {
+			//ERROR TOO LONG => ignore rest			
+		}
+		else if ( char_count<21 ) {
+			oled->err_line_1[char_count]	= *msg++;
+		}
+		else if ( char_count<42 ) {
+			oled->err_line_2[char_count-21]	= *msg++;
+		}
+		else {
+			oled->err_line_3[char_count-42]	= *msg++;
+		}
+		
+		char_count++;
+	}
+	
+	
+	
+//	for (int index = 0; index < 63; index++)
+//	{
+//		if ( index<21 ) {
+//			oled->err_line_1[index]		= *msg[index];
+//		}
+//		else if ( index<42 ) {
+//			oled->err_line_2[index-21]	= *msg[index];
+//		}
+//		else {
+//			oled->err_line_3[index-42]	= *msg[index];
+//		}		
+//	}	
+	
+//	memmove	( oled->err_line_1, msg, 21 );
+//	memcpy	( oled->err_line_2, msg, 21 );
+//	memcpy	( oled->err_line_3, msg, 21 );
+	
+	oled->show_option = OLED_ERROR;
+}
+
+void oled_screen   ( Hat_oled *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *motorA, Motor *motorB, Display *display, uint8_t *datagram ) {
 	
 	oled_clear_frame();	
 	
@@ -750,24 +792,72 @@ void oled_screen   ( Display_s *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *m
 			
 		case OLED_IP_ADDR :
 			oled_string( 0, 0, "IP Addresses" );
-			oled_string( 0, 1, "eth0  131.181.333.111" );
-			oled_string( 0, 2, "wlan0 131.181.333.222" );
-			oled_string( 0, 3, "wlan1 131.181.333.333" );
+			
+			oled_string( 0, 1, "eth      .   .   ." );			
+				sprintf(fstring, "%3d", oled->eth_addr_1 );
+				oled_string (  6,1,fstring );			
+				sprintf(fstring, "%3d", oled->eth_addr_2 );
+				oled_string ( 10,1,fstring );
+				sprintf(fstring, "%3d", oled->eth_addr_3 );
+				oled_string ( 14,1,fstring );
+				sprintf(fstring, "%3d", oled->eth_addr_4 );
+				oled_string ( 18,1,fstring );			
+			
+			oled_string( 0, 2, "wlan     .   .   ." );
+				sprintf(fstring, "%3d", oled->wlan_addr_1 );
+				oled_string (  6,2,fstring );			
+				sprintf(fstring, "%3d", oled->wlan_addr_2 );
+				oled_string ( 10,2,fstring );
+				sprintf(fstring, "%3d", oled->wlan_addr_3 );
+				oled_string ( 14,2,fstring );
+				sprintf(fstring, "%3d", oled->wlan_addr_4 );
+				oled_string ( 18,2,fstring );						
+			
 		
+			break;
+			
+		case OLED_DATAGRAM :
+			oled_string( 0, 0, "Datagram (hex)" );
+
+			sprintf(fstring, "%x", datagram[0] );
+			oled_string (  0,1,fstring );
+			sprintf(fstring, "%x", datagram[1] );
+			oled_string (  5,1,fstring );			
+			sprintf(fstring, "%x", datagram[2] );
+			oled_string ( 10,1,fstring );
+			sprintf(fstring, "%x", datagram[3] );
+			oled_string ( 15,1,fstring );
+
+			sprintf(fstring, "%x", datagram[4] );
+			oled_string (  0,2,fstring );
+			sprintf(fstring, "%x", datagram[5] );
+			oled_string (  5,2,fstring );			
+			sprintf(fstring, "%x", datagram[6] );
+			oled_string ( 10,2,fstring );
+			sprintf(fstring, "%x", datagram[7] );
+			oled_string ( 15,2,fstring );
+			
+			sprintf(fstring, "%x", datagram[8] );
+			oled_string (  0,3,fstring );
+			sprintf(fstring, "%x", datagram[9] );
+			oled_string (  5,3,fstring );
+			
+			break;
+			
+		case OLED_ERROR :
+			oled_string( 0, 0, "ERROR" );
+				sprintf(fstring, "%s", oled->err_line_1 );
+				oled_string (  0,1,fstring );			
+				sprintf(fstring, "%s", oled->err_line_2 );
+				oled_string (  0,2,fstring );
+				sprintf(fstring, "%s", oled->err_line_3 );
+				oled_string (  0,3,fstring );
 			break;
 			
 		case OLED_SHUTDOWN : 
 			oled_string( 0, 0, "SHUTDOWN" );
-		
 			break;
 	}			
 	
 	oled_write_frame();
 }
-
-
-
-
-
-
-

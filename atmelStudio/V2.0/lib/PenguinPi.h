@@ -106,7 +106,24 @@ typedef struct {
 
 typedef struct {
 	uint8_t 			show_option;		// Selects which screen to show
-} Display_s;
+	
+	//IP Addresses
+	int16_t				eth_addr_1;	
+	int16_t				eth_addr_2;
+	int16_t				eth_addr_3;
+	int16_t				eth_addr_4;
+	
+	int16_t				wlan_addr_1;	
+	int16_t				wlan_addr_2;
+	int16_t				wlan_addr_3;
+	int16_t				wlan_addr_4;
+	
+	//Error messages
+	uint8_t				err_line_1[21];
+	uint8_t 			err_line_2[21];
+	uint8_t				err_line_3[21];
+	
+} Hat_oled;
 
 
 union {
@@ -140,8 +157,9 @@ void 	oled_write_frame	( );
 void 	oled_character		( uint8_t x, uint8_t y, char character );
 void 	oled_string			( uint8_t x, uint8_t y, char *string );
 
-void 	oled_screen    		( Display_s *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *motorA, Motor *motorB, Display *display );
-void    oled_next_screen	( Display_s *oled ); 
+void 	oled_screen    		( Hat_oled *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *motorA, Motor *motorB, Display *display, uint8_t *datagram );
+void    oled_next_screen	( Hat_oled *oled ); 
+void    oled_show_error		( Hat_oled *oled, char *msg ); 
 
 void 	detect_reset		( void );
 
@@ -159,12 +177,13 @@ void 	i2cReadnBytes	(uint8_t *data, uint8_t address, uint8_t reg, uint8_t n);
 int8_t 	i2cWritenBytes	(uint8_t *data, uint8_t address, uint8_t reg, uint16_t n);
 int8_t 	i2cWriteByte	(uint8_t data, uint8_t address, uint8_t reg);
 
-void parseMotorOp		( uint8_t *datagram, Motor *motor);
-void parseServoOp		( uint8_t *datagram, Servo *servo);
-void parseLEDOp			( uint8_t *datagram, LED *led);
-void parseDisplayOp		( uint8_t *datagram, Display *display);
-void parseButtonOp		( uint8_t *datagram, Button *btn);
-void parseADCOp			( uint8_t *datagram, AnalogIn *adc);
+void parseMotorOp		( uint8_t *datagram, Hat_oled *oled, Motor *motor);
+void parseServoOp		( uint8_t *datagram, Hat_oled *oled, Servo *servo);
+void parseLEDOp			( uint8_t *datagram, Hat_oled *oled, LED *led);
+void parseOLEDOp		( uint8_t *datagram, Hat_oled *hat_oled);
+void parseDisplayOp		( uint8_t *datagram, Hat_oled *oled, Display *display);
+void parseButtonOp		( uint8_t *datagram, Hat_oled *oled, Button *btn);
+void parseADCOp			( uint8_t *datagram, Hat_oled *oled, AnalogIn *adc);
 void parseAllOp			( uint8_t *datagram);
 
 int16_t motorPIDControl			( int16_t setPoint, Motor *motor );
@@ -286,6 +305,8 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define AD_ADC_V 		0x18
 #define AD_ADC_C 		0x19
 
+#define AD_OLED			0x07
+
 #define AD_ALL 			0xFF
 
 //device opcodes
@@ -345,6 +366,16 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define DISPLAY_GET_DIGIT_0 0x83
 #define DISPLAY_GET_MODE 	0x84
 
+//OLED
+#define OLED_SET_IP_ETH_1 	0x01
+#define OLED_SET_IP_ETH_2 	0x02
+#define OLED_SET_IP_ETH_3 	0x03
+#define OLED_SET_IP_ETH_4	0x04
+#define OLED_SET_IP_WLAN_1 	0x05
+#define OLED_SET_IP_WLAN_2 	0x06
+#define OLED_SET_IP_WLAN_3 	0x07
+#define OLED_SET_IP_WLAN_4	0x08
+
 //BUTTON
 #define BUTTON_SET_PROGRAM_MODE 0x01
 #define BUTTON_SET_PIN_MODE 0x02
@@ -373,7 +404,10 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define OLED_ENCODERS	2
 #define OLED_IP_ADDR	3
 #define OLED_DISPLAY	4
-#define OLED_SHUTDOWN	5	//Keep this as highest
+#define OLED_DATAGRAM	5
+//Options are screens that appear but not via user selection
+#define OLED_ERROR		6	//Keep this as first is non user list
+#define OLED_SHUTDOWN	7	
 
 
 static const uint8_t ASCII[][5] =
