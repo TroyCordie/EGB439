@@ -177,7 +177,7 @@ void init_structs(void){
 	hat.int_07				= 0;		//No interrupts by default
 	hat.has_oled			= 0;		//No OLED by default
 	
-	hat_oled.show_option	= OLED_BATTERY;	
+	hat_oled.show_option	= OLED_IP_ADDR;	
 	hat_oled.eth_addr_1		= 0;
 	hat_oled.eth_addr_2		= 0;
 	hat_oled.eth_addr_3		= 0;
@@ -450,6 +450,7 @@ void parseMotorOp	( uint8_t *datagram, Hat_oled *hat_oled, Motor *motor ){
 				ledB.count = 1000;
 			}else{
 				uart_puts_P("ERROR: Incorrect Type\n");
+				oled_show_error( hat_oled, "MOTOR:SET_DPS:Incorrect Type");
 			}
 		break;
 		case MOTOR_SET_DEGREES:
@@ -466,6 +467,7 @@ void parseMotorOp	( uint8_t *datagram, Hat_oled *hat_oled, Motor *motor ){
 				else motor->dir = 0;
 			}else{
 				uart_puts_P("ERROR: Incorrect Type\n");
+				oled_show_error( hat_oled, "MOTOR:SET_DEGS:Incorrect Type");
 			}
 		break;
 		case MOTOR_SET_ENC:
@@ -483,6 +485,7 @@ void parseMotorOp	( uint8_t *datagram, Hat_oled *hat_oled, Motor *motor ){
 				else motor->dir = 0;
 			}else{
 				uart_puts_P("ERROR: Incorrect Type\n");
+				oled_show_error( hat_oled, "MOTOR:SET_DIR:Incorrect Type");
 			}
 		break;
 		case MOTOR_SET_GAIN_P:
@@ -493,6 +496,7 @@ void parseMotorOp	( uint8_t *datagram, Hat_oled *hat_oled, Motor *motor ){
 				motor->maxError = INT16_MAX / (motor->gainP + 1);				
 			}else{
 				uart_puts_P("ERROR: Incorrect Type\n");
+				oled_show_error( hat_oled, "MOTOR:SET_P:Incorrect Type");
 			}
 		break;
 		case MOTOR_SET_GAIN_I:
@@ -503,6 +507,7 @@ void parseMotorOp	( uint8_t *datagram, Hat_oled *hat_oled, Motor *motor ){
 				motor->maxErrorSum = (INT32_MAX / 2) / (motor->gainI + 1);
 			}else{
 				uart_puts_P("ERROR: Incorrect Type\n");
+				oled_show_error( hat_oled, "MOTOR:SET_I:Incorrect Type");
 			}
 		break;
 		case MOTOR_SET_GAIN_D:
@@ -512,6 +517,7 @@ void parseMotorOp	( uint8_t *datagram, Hat_oled *hat_oled, Motor *motor ){
 				motor->gainD = readFloat(flMem) * PID_SCALE;
 			}else{
 				uart_puts_P("ERROR: Incorrect Type\n");
+				oled_show_error( hat_oled, "MOTOR:SET_D:Incorrect Type");
 			}
 		break;
 		case MOTOR_SET_ENC_MODE:
@@ -524,6 +530,7 @@ void parseMotorOp	( uint8_t *datagram, Hat_oled *hat_oled, Motor *motor ){
 				motor->dir = 0;
 			}else{
 				uart_puts_P("ERROR: Incorrect Type\n");
+				oled_show_error( hat_oled, "MOTOR:SET_ENC:Incorrect Type");
 			}
 		break;
 		case MOTOR_SET_CONTROL_MODE:
@@ -535,6 +542,7 @@ void parseMotorOp	( uint8_t *datagram, Hat_oled *hat_oled, Motor *motor ){
 				motor->dir = 0;
 			}else{
 				uart_puts_P("ERROR: Incorrect Type\n");
+				oled_show_error( hat_oled, "MOTOR:SET_CTRL:Incorrect Type");
 			}
 		break;
 		
@@ -589,6 +597,7 @@ void parseMotorOp	( uint8_t *datagram, Hat_oled *hat_oled, Motor *motor ){
 		
 		default:
 			uart_puts_P("ERROR: Unknown OpCode\n");
+			oled_show_error( hat_oled, "MOTOR:Unknown OpCode");
 		break;		
 	}
 }
@@ -737,7 +746,7 @@ void parseOLEDOp	( uint8_t *datagram, Hat_oled *hat_oled ) {
 			if( datagram[0] == 5 ){
 				hat_oled->eth_addr_2 =  (datagram[3]<<8) | datagram[4];
 			}else{
-				uart_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR:OLED:Incorrect Type\n");
 				oled_show_error( hat_oled, "OLED:SET_E2:Incorrect Type");
 			}
 		break;
@@ -745,7 +754,7 @@ void parseOLEDOp	( uint8_t *datagram, Hat_oled *hat_oled ) {
 			if( datagram[0] == 5 ){
 				hat_oled->eth_addr_3 = (datagram[3]<<8) | datagram[4];
 			}else{
-				uart_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR:OLED:Incorrect Type\n");
 				oled_show_error( hat_oled, "OLED:SET_E3:Incorrect Type");
 			}
 		break;
@@ -753,7 +762,7 @@ void parseOLEDOp	( uint8_t *datagram, Hat_oled *hat_oled ) {
 			if( datagram[0] == 5 ){
 				hat_oled->eth_addr_4 = (datagram[3]<<8) | datagram[4];
 			}else{
-				uart_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR:OLED:Incorrect Type\n");
 				oled_show_error( hat_oled, "OLED:SET_E4:Incorrect Type");
 			}
 		break;
@@ -770,7 +779,7 @@ void parseOLEDOp	( uint8_t *datagram, Hat_oled *hat_oled ) {
 			if( datagram[0] == 5 ){
 				hat_oled->wlan_addr_2 =  (datagram[3]<<8) | datagram[4];
 			}else{
-				uart_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR:OLED:Incorrect Type\n");
 				oled_show_error( hat_oled, "OLED:SET_W2:Incorrect Type");
 			}
 		break;
@@ -778,7 +787,7 @@ void parseOLEDOp	( uint8_t *datagram, Hat_oled *hat_oled ) {
 			if( datagram[0] == 5 ){
 				hat_oled->wlan_addr_3 = (datagram[3]<<8) | datagram[4];
 			}else{
-				uart_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR:OLED:Incorrect Type\n");
 				oled_show_error( hat_oled, "OLED:SET_W3:Incorrect Type");
 			}
 		break;
@@ -786,7 +795,7 @@ void parseOLEDOp	( uint8_t *datagram, Hat_oled *hat_oled ) {
 			if( datagram[0] == 5 ){
 				hat_oled->wlan_addr_4 = (datagram[3]<<8) | datagram[4];
 			}else{
-				uart_puts_P("ERROR: Incorrect Type\n");
+				uart_puts_P("ERROR:OLED:Incorrect Type\n");
 				oled_show_error( hat_oled, "OLED:SET_W4:Incorrect Type");
 			}
 		break;		
@@ -830,6 +839,9 @@ void parseADCOp		( uint8_t *datagram, Hat_oled *hat_oled, AnalogIn *adc ){
 		
 		default:
 			uart_puts_P("ERROR: Unknown OpCode\n");
+			//flash BLUE LED
+			ledB.state = 1;
+			ledB.count = 1000;			
 		break;
 	}
 }
