@@ -932,7 +932,7 @@ void parseAllOp		( uint8_t *datagram ){
 
 int16_t main(void) {
 
-  uint8_t   datagram_last[DGRAM_MAX_LENGTH+1];
+	uint8_t   	datagram_last[DGRAM_MAX_LENGTH+1];
 	
 	uint8_t 	data_r[2]  			= {0, 0};
 	
@@ -1018,7 +1018,7 @@ int16_t main(void) {
 		if(com == STARTBYTE) {
 			parseDatagram( datagramG );
 			
-			if ( 1==1) {
+			if ( 0==1) {
 				//Print Datagram
 				uart_puts_P("DG : ");
 				for( uint8_t j = 0; j < DGRAM_MAX_LENGTH; j++) {			
