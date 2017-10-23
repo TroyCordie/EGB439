@@ -13,8 +13,6 @@ ppi.init()
 
 oled = ppi.OLED( ppi.AD_OLED )
 
-
-
 #This works but fails if network not present ie split has no elements
 #ip_addr_eth0_str  = os.popen('ip addr show eth0').read().split("inet ")[1].split("/")[0]
 #ip_addr_wlan0_str = os.popen('ip addr show wlan0').read().split("inet ")[1].split("/")[0]
