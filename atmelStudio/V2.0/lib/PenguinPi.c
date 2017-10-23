@@ -569,9 +569,9 @@ void init_oled () {
 	//Update screen with initial Splash Screen contents
 		oled_write_frame();
 		
-		
-		
-//	_delay_ms(5000);
+		_delay_ms(5000);
+	
+	
 //	oled_clear_frame();	
 //	oled_string( 0, 0, "PenguinPi" );	
 //	oled_string( 1, 1, "111111111" );
@@ -682,25 +682,6 @@ void  oled_show_error	( Hat_oled *oled, char *msg ){
 		
 		char_count++;
 	}
-	
-	
-	
-//	for (int index = 0; index < 63; index++)
-//	{
-//		if ( index<21 ) {
-//			oled->err_line_1[index]		= *msg[index];
-//		}
-//		else if ( index<42 ) {
-//			oled->err_line_2[index-21]	= *msg[index];
-//		}
-//		else {
-//			oled->err_line_3[index-42]	= *msg[index];
-//		}		
-//	}	
-	
-//	memmove	( oled->err_line_1, msg, 21 );
-//	memcpy	( oled->err_line_2, msg, 21 );
-//	memcpy	( oled->err_line_3, msg, 21 );
 	
 	oled->show_option = OLED_ERROR;
 }
