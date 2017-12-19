@@ -1099,8 +1099,8 @@ int16_t main(void) {
 		motorA.degrees   = motorA.position * DEGPERCOUNT;
    
    //MotorB Maths
-    motorB.enc_raw1  = enc_a1_count;
-    motorB.enc_raw2  = enc_a2_count;   
+    motorB.enc_raw1  = enc_b1_count;
+    motorB.enc_raw2  = enc_b2_count;   
 		motorB.degrees   = motorB.position * DEGPERCOUNT;
 
 
@@ -1254,25 +1254,36 @@ int16_t main(void) {
 
 						switch ( i ) {
 		
-							case 0 :	//Button S1 has been pressed											
+							case 0 :	//Button S1 has been pressed      : Always next screen											
 								oled_next_screen ( &hat_oled );
 								break;
 	
+             //These buttons can be dependant on the current visible screen
 							case 1 : 	//Button S2 has been pressed											
-								motorA.dir			=   0;
+								motorA.dir			    =   0;
 								motorA.setSpeedDPS	=   0;
-								motorB.dir			=   0;
+								motorB.dir			    =   0;
 								motorB.setSpeedDPS	=   0;
 								break;
 								
 							case 2 : 	//Button S3 has been pressed											
-								motorA.dir			=  -1;
+								motorA.dir			    =  -1;
 								motorA.setSpeedDPS	=  50;
 								break;
 							
-							case 3 : 	//Button S4 has been pressed											
-								motorB.dir			=   1;
-								motorB.setSpeedDPS	= 100;
+							case 3 : 	//Button S4 has been pressed		
+                if ( hat_oled.show_option == OLED_ENCODERS ) {
+                    //Reset RAW encoder values
+                    enc_a1_count    = 0;
+                    enc_a2_count    = 0;
+                    enc_b1_count    = 0;
+                    enc_b2_count    = 0;
+                  
+                }
+							  else {
+								    motorB.dir			    =   1;
+								    motorB.setSpeedDPS	= 100;
+                }                                                                                                             
 								break;
 						}
 					}
