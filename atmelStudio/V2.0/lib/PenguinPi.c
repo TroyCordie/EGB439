@@ -750,8 +750,30 @@ void oled_screen   ( Hat_oled *oled, AnalogIn *vdiv, AnalogIn *csense, Motor *mo
 		case OLED_ENCODERS :
 			oled_string( 0, 0, "ENCODERS" );
 
-			//enc
-			oled_string( 0, 1, "enc:" );
+      //Encoders RAW
+			oled_string( 0, 1, "enc1:" );
+				sprintf(fstring, "%6d", motorA->enc_raw1);
+				oled_string ( 5,1,fstring );			
+			
+				sprintf(fstring, "%6d", motorB->enc_raw1);
+				oled_string ( 13,1,fstring );
+
+			oled_string( 0, 2, "enc2:" );
+				sprintf(fstring, "%6d", motorA->enc_raw2);
+				oled_string ( 5,2,fstring );			
+			
+				sprintf(fstring, "%6d", motorB->enc_raw2);
+				oled_string ( 13,2,fstring );
+        	
+			//Divide screen
+				oled_frame_divider();				
+			break;
+      
+		case OLED_POSITION :
+			oled_string( 0, 0, "POSITION" );
+        
+			//position
+			oled_string( 0, 1, "pos:" );
 				sprintf(fstring, "%6d", motorA->position);
 				oled_string ( 5,1,fstring );			
 			

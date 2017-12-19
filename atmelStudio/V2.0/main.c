@@ -41,9 +41,9 @@
 //Always have
 Motor 		motorA;
 Motor 		motorB;
-LED 		ledR;
-LED 		ledG;
-LED 		ledB;
+LED 		  ledR;
+LED 		  ledG;
+LED 		  ledB;
 AnalogIn 	vdiv;
 AnalogIn 	csense;
 
@@ -54,6 +54,20 @@ Hat_oled	hat_oled;
 Display 	displayA;	//remove when parsing logic changed
 
 uint8_t		hat_07_int_flag = 0;
+
+
+
+uint16_t  enc_a1_count  = 0;
+uint16_t  enc_a2_count  = 0;
+uint16_t  enc_b1_count  = 0;
+uint16_t  enc_b2_count  = 0;
+
+uint8_t enc_a1_val_last = 0;
+uint8_t enc_a2_val_last = 0;
+uint8_t enc_b1_val_last = 0;
+uint8_t enc_b2_val_last = 0;
+
+
 
 //#################################################################################################
 //
@@ -79,6 +93,28 @@ ISR( PCINT0_vect ) {
 	//Update LEDs
 		ledG.state = 1;
 		ledG.count = 100;
+   
+   
+   
+  //DEBUG
+  //Check for change and a rising edge
+    if ( (enc_a1_val_last != enc_a1_val) && (enc_a1_val==1) ){
+      enc_a1_count   = enc_a1_count + 1;  
+    }
+    if ( (enc_a2_val_last != enc_a2_val) && (enc_a2_val==1) ){
+      enc_a2_count   = enc_a2_count + 1;  
+    }  
+    if ( (enc_b1_val_last != enc_b1_val) && (enc_b1_val==1) ){
+      enc_b1_count   = enc_b1_count + 1;  
+    }
+    if ( (enc_b2_val_last != enc_b2_val) && (enc_b2_val==1) ){
+      enc_b2_count   = enc_b2_count + 1;  
+    }  
+  
+    enc_a1_val_last  = enc_a1_val;
+    enc_a2_val_last  = enc_a2_val;
+    enc_b1_val_last  = enc_b1_val;
+    enc_b2_val_last  = enc_b2_val;   
 }
 
 ISR( PCINT2_vect ) {
@@ -91,10 +127,10 @@ ISR( PCINT2_vect ) {
 	}
 }
 
-ISR( TIMER2_OVF_vect ){							// period of 21.3333us. use a counter for longer delays
+ISR( TIMER2_OVF_vect ){							            // period of 21.3333us. use a counter for longer delays
 	static uint8_t motorControlCount = 0;
 	
-	if(motorControlCount < CONTROL_COUNT) {		//should achieve a period of 64 us
+	if(motorControlCount < CONTROL_COUNT) {		    //should achieve a period of 64 us
 		motorControlCount++;
 	}
 	else {
@@ -147,20 +183,26 @@ void init_structs(void){
 	float kD 				= 2.0;
 	
 	motorA.which_motor		= 0;
-	motorA.gainP 			= kP*PID_SCALE;
-	motorA.gainI 			= kI*PID_SCALE;
-	motorA.gainD 			= kD*PID_SCALE;
-	motorA.maxError 		= INT16_MAX / (motorA.gainP + 1);
+	motorA.gainP 			    = kP*PID_SCALE;
+	motorA.gainI 			    = kI*PID_SCALE;
+	motorA.gainD 			    = kD*PID_SCALE;
+	motorA.maxError 		  = INT16_MAX / (motorA.gainP + 1);
 	motorA.maxErrorSum 		= (INT32_MAX / 2) / (motorA.gainI + 1);
 	motorA.encoderMode 		= 1;
+  motorA.position       = 0;
+  motorA.enc1PinState   = 0;
+  motorA.enc2PinState   = 0;
 	
 	motorB.which_motor		= 1;
-	motorB.gainP 			= kP*PID_SCALE;
-	motorB.gainI 			= kI*PID_SCALE;
-	motorB.gainD 			= kD*PID_SCALE;
-	motorB.maxError 		= INT16_MAX / (motorB.gainP + 1);
+	motorB.gainP 			    = kP*PID_SCALE;
+	motorB.gainI 			    = kI*PID_SCALE;
+	motorB.gainD 			    = kD*PID_SCALE;
+	motorB.maxError 		  = INT16_MAX / (motorB.gainP + 1);
 	motorB.maxErrorSum 		= (INT32_MAX / 2) / (motorB.gainI + 1);
 	motorB.encoderMode 		= 1;
+  motorB.position       = 0;
+  motorB.enc1PinState   = 0;
+  motorB.enc2PinState   = 0; 
 	
 	vdiv.count 				= 0;
 	vdiv.scale 				= 16.018497;//mV per div
@@ -1051,9 +1093,15 @@ int16_t main(void) {
 		dgrammem.fl = 0;
 
 
-
-		motorA.degrees = motorA.position * DEGPERCOUNT;
-		motorB.degrees = motorB.position * DEGPERCOUNT;
+    //MotorA Maths
+    motorA.enc_raw1  = enc_a1_count;
+    motorA.enc_raw2  = enc_a2_count;
+		motorA.degrees   = motorA.position * DEGPERCOUNT;
+   
+   //MotorB Maths
+    motorB.enc_raw1  = enc_a1_count;
+    motorB.enc_raw2  = enc_a2_count;   
+		motorB.degrees   = motorB.position * DEGPERCOUNT;
 
 
         /*
@@ -1269,6 +1317,16 @@ int16_t main(void) {
 //					uart_puts_P("M:B\n");
 //						fn_dbg_motor ( &motorB );				
 //						
+          //Encoders       
+					  //sprintf(fstring, "ENC A1: %d \n", enc_a1_count);
+					  //uart_puts(fstring);
+					  //sprintf(fstring, "ENC A2: %d \n", enc_a2_count);
+					  //uart_puts(fstring);
+					  //sprintf(fstring, "ENC B1: %d \n", enc_b1_count);
+					  //uart_puts(fstring);
+					  //sprintf(fstring, "ENC B2: %d \n", enc_b2_count);
+					  //uart_puts(fstring);                                                                     
+
 //				//Timers
 //					sprintf(fstring, "OC MA: %5d\n", OCR0B );	//Motor A on OCR0B
 //					uart_puts(fstring);			

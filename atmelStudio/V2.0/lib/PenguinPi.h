@@ -29,6 +29,9 @@ typedef struct {
 	volatile int16_t 	position;  			// the "encoder" value
 	int8_t 			 	encoderMode;		// mode 0: single encoder, mode 1: quadrature, mode 2: x4 counting (xor quadrature)
 	
+  int16_t      enc_raw1;
+  int16_t      enc_raw2;
+ 
 	int16_t 			speedDPS;
 	int16_t 			degrees;
 	
@@ -403,11 +406,12 @@ void buttonLogic(Button *button, uint8_t btnVal);
 #define OLED_BATTERY	1
 #define OLED_MOTORS		2 
 #define OLED_ENCODERS	3
-#define OLED_DISPLAY	4
-#define OLED_DATAGRAM	5
+#define OLED_POSITION	4
+#define OLED_DISPLAY	5
+#define OLED_DATAGRAM	6
 //Options are screens that appear but not via user selection
-#define OLED_ERROR		6	//Keep this as first is non user list
-#define OLED_SHUTDOWN	7	
+#define OLED_ERROR		7	//Keep this as first is non user list
+#define OLED_SHUTDOWN	8	
 
 
 static const uint8_t ASCII[][5] =
