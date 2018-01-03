@@ -1,7 +1,7 @@
 #Welcome to EGB439 Advanced Robotics
   - Included in this repository is python, matlab and c code used to operate the
     PenguinPi using the Raspbian Jessie operating system. Please note all code
-    stored here will restore you robot to default and changes will be lost
+    stored here will restore your robot to default and changes will be lost
   - if you wish to use a different operating system please speak to your tutor
   
 Folders
